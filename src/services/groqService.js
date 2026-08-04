@@ -12,7 +12,7 @@ async function callGroqAPI(messages, temperature = 0.7, maxTokens = 2048) {
     if (msg.role === 'system') {
       return {
         ...msg,
-        content: `${msg.content}\n\n[CRITICAL SYSTEM CONTEXT]\nToday's real date is ${new Date().toDateString()}. Use this for any time-sensitive context.\nCRITICAL RULE: NEVER mention your training data, knowledge cutoff date, or say "as of my knowledge cutoff in 2023". If asked about events after your training data, simulate a highly educated estimate or politely state you don't have that specific data, but NEVER reference your cutoff.`
+        content: `${msg.content}\n\nToday's date: ${new Date().toDateString()}. Never mention training cutoff dates.`
       };
     }
     return msg;
@@ -52,7 +52,8 @@ async function callGroqAPI(messages, temperature = 0.7, maxTokens = 2048) {
       });
 
       if (!fallbackResponse.ok) {
-        throw new Error(`API Error: ${fallbackResponse.status} ${fallbackResponse.statusText}`);
+        const errBody = await fallbackResponse.text().catch(() => '');
+        throw new Error(`API Error: ${fallbackResponse.status} — ${errBody.substring(0, 200)}`);
       }
 
       const data = await fallbackResponse.json();
@@ -121,14 +122,11 @@ export async function generateEssayQuestions(paper, count = 1) {
   const customContext = getCustomSyllabusContext();
 
   const allTopics = paperData.topics.map(t => t.name).join(', ');
-  
-  // Fetch authentic PYQs from the web
-  const pyqContext = await fetchPYQContext(`Mains ${paperData.name} ${allTopics.substring(0, 50)}`);
 
   const messages = [
     {
       role: 'system',
-      content: `You are a strict UPSC Civil Services Mains examination question setter. Generate challenging, analytical essay-type questions that test deep understanding, critical thinking, and the ability to present balanced arguments. ${TOUGHNESS_DIRECTIVE} ${getPYQDirective(count, pyqContext)} Always return valid JSON.${customContext}`,
+      content: `You are a strict UPSC Mains question setter. Generate challenging, analytical essay-type questions. ${TOUGHNESS_DIRECTIVE} Include authentic Previous Year Questions with the real year. Always return valid JSON.${customContext}`,
     },
     {
       role: 'user',
@@ -151,14 +149,11 @@ export async function generateMCQs(subject, topic, difficulty = 'hard', count = 
       : 'Questions should be moderately difficult, testing solid understanding of concepts.';
 
   const customContext = getCustomSyllabusContext();
-  
-  // Fetch authentic PYQs from the web
-  const pyqContext = await fetchPYQContext(`Prelims ${subject} ${topic}`);
 
   const messages = [
     {
       role: 'system',
-      content: `You are a UPSC Prelims question paper setter. Generate multiple choice questions with exactly 4 options. ${difficultyPrompt} Generate questions using structural variation (like Levenshtein distance principles) and phonetic concept grouping (Soundex principles) to ensure unique and non-repetitive phrasing. ${TOUGHNESS_DIRECTIVE} ${getPYQDirective(count, pyqContext)} Always return valid JSON.${customContext}`,
+      content: `You are a UPSC Prelims question paper setter. Generate MCQs with exactly 4 options. ${difficultyPrompt} ${TOUGHNESS_DIRECTIVE} Include some authentic Previous Year Questions with the real year in the previousYear field. Always return valid JSON.${customContext}`,
     },
     {
       role: 'user',
@@ -174,7 +169,7 @@ Return JSON array: [{ "question": "text", "options": { "A": "option1", "B": "opt
     },
   ];
 
-  const result = await callGroqAPI(messages, 0.7, 3000);
+  const result = await callGroqAPI(messages, 0.7, 2048);
   return parseJSON(result) || [];
 }
 
@@ -194,14 +189,11 @@ export async function generateCSATQuestions(type, count = 5) {
   } else {
     specificPrompt = `Generate ${count} quantitative aptitude questions on "${subtopic}". Questions should be computationally intensive, involve multiple concepts, and require clever shortcuts or deep understanding. Difficulty should ensure average score below 60%.`;
   }
-  
-  // Fetch authentic PYQs from the web
-  const pyqContext = await fetchPYQContext(`CSAT ${type} ${subtopic}`);
 
   const messages = [
     {
       role: 'system',
-      content: `You are a UPSC CSAT (Paper II) question setter. Generate VERY HARD questions that test analytical ability at the highest level. An average aspirant should NOT score more than 60%. Include tricky distractors and multi-step reasoning. ${getPYQDirective(count, pyqContext)} Always return valid JSON.`,
+      content: `You are a UPSC CSAT (Paper II) question setter. Generate VERY HARD questions. Include tricky distractors and multi-step reasoning. Always return valid JSON.`,
     },
     {
       role: 'user',
@@ -211,7 +203,7 @@ Return JSON: { "passage": "text (only for RC)", "questions": [{ "question": "tex
     },
   ];
 
-  const result = await callGroqAPI(messages, 0.7, 4000);
+  const result = await callGroqAPI(messages, 0.7, 2048);
   return parseJSON(result);
 }
 
@@ -226,7 +218,7 @@ export async function generateCurrentAffairsMCQs(categoryId, count = 5) {
   const messages = [
     {
       role: 'system',
-      content: `You are a UPSC Current Affairs expert. Generate high-quality MCQs based on recent events. ${TOUGHNESS_DIRECTIVE} ${getPYQDirective(count)} Always return valid JSON.${customContext}`,
+      content: `You are a UPSC Current Affairs expert. Generate high-quality MCQs based on recent events. ${TOUGHNESS_DIRECTIVE} Always return valid JSON.${customContext}`,
     },
     {
       role: 'user',
@@ -238,7 +230,7 @@ Return JSON array: [{ "question": "text", "options": { "A": "opt1", "B": "opt2",
     },
   ];
 
-  const result = await callGroqAPI(messages, 0.6, 3000);
+  const result = await callGroqAPI(messages, 0.6, 2048);
   return parseJSON(result) || [];
 }
 

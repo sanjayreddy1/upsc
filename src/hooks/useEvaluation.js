@@ -154,8 +154,11 @@ function saveMCQHistory(result) {
     history.unshift({
       score: result.percentage,
       correct: result.correct,
+      incorrect: result.incorrect,
       total: result.totalQuestions,
       date: result.timestamp,
+      // Store full results with questions so user can review corrections
+      results: result.results || [],
     });
     localStorage.setItem('mcq_history', JSON.stringify(history.slice(0, 50)));
   } catch (e) {

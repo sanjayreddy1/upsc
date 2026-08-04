@@ -105,6 +105,10 @@ export default function EvaluationPanel({ evaluation, onClose }) {
                   <span className="score-label">Total Questions</span>
                   <span className="score-value">{evaluation.totalQuestions}</span>
                 </div>
+                <div className="score-item">
+                  <span className="score-label">Accuracy Rate</span>
+                  <span className="score-value">{evaluation.totalQuestions > 0 ? Math.round((evaluation.correct / evaluation.totalQuestions) * 100) : 0}%</span>
+                </div>
               </>
             ) : (
               <>
@@ -120,6 +124,80 @@ export default function EvaluationPanel({ evaluation, onClose }) {
             )}
           </div>
         </div>
+
+        {/* Detailed MCQ Topic-wise Analysis */}
+        {isMCQ && evaluation.results && evaluation.results.length > 0 && (() => {
+          // Group by topic
+          const topicMap = {};
+          evaluation.results.forEach(q => {
+            const topic = q.topic || 'General';
+            if (!topicMap[topic]) topicMap[topic] = { correct: 0, wrong: 0, skipped: 0, total: 0 };
+            topicMap[topic].total++;
+            if (q.isCorrect) topicMap[topic].correct++;
+            else if (q.status === 'unanswered') topicMap[topic].skipped++;
+            else topicMap[topic].wrong++;
+          });
+          return (
+            <div className="eval-section">
+              <h3>📊 Topic-wise Performance</h3>
+              <div className="algo-grid" style={{ gap: '12px' }}>
+                {Object.entries(topicMap).map(([topic, stats]) => (
+                  <div key={topic} className="algo-card" style={{ padding: '14px' }}>
+                    <span className="algo-name">{topic}</span>
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                      <span className="badge badge-success">{stats.correct} ✓</span>
+                      <span className="badge badge-danger">{stats.wrong} ✗</span>
+                      {stats.skipped > 0 && <span className="badge badge-info">{stats.skipped} skipped</span>}
+                    </div>
+                    <div className="algo-bar" style={{ marginTop: '8px' }}>
+                      <div className="algo-bar-fill" style={{ width: `${stats.total > 0 ? (stats.correct / stats.total) * 100 : 0}%`, background: 'var(--accent-emerald)' }} />
+                    </div>
+                    <span className="algo-value">{stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Detailed MCQ Per-Question Review */}
+        {isMCQ && evaluation.results && evaluation.results.length > 0 && (
+          <div className="eval-section">
+            <h3>📝 Question-by-Question Review</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {evaluation.results.map((q, idx) => (
+                <div key={idx} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', borderLeft: `4px solid ${q.isCorrect ? 'var(--accent-emerald)' : q.status === 'unanswered' ? 'var(--accent-blue)' : 'var(--accent-rose)'}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <strong>Q{idx + 1}</strong>
+                    <span className={`badge ${q.isCorrect ? 'badge-success' : q.status === 'unanswered' ? 'badge-info' : 'badge-danger'}`}>
+                      {q.isCorrect ? '✓ Correct' : q.status === 'unanswered' ? 'Skipped' : '✗ Wrong'}
+                    </span>
+                  </div>
+                  <p style={{ margin: '8px 0', fontWeight: 500 }}>{q.question}</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
+                    {Object.entries(q.options || {}).map(([key, val]) => {
+                      let style = { padding: '6px 12px', borderRadius: '6px', fontSize: '0.9rem', display: 'flex', gap: '8px', alignItems: 'center' };
+                      if (key === q.correct) style.background = 'rgba(67, 233, 123, 0.12)';
+                      else if (key === q.userAnswer && key !== q.correct) style.background = 'rgba(250, 112, 154, 0.12)';
+                      return (
+                        <div key={key} style={style}>
+                          <strong>{key}.</strong> {val}
+                          {key === q.correct && <span style={{ marginLeft: 'auto', color: 'var(--accent-emerald)' }}>✓ Correct</span>}
+                          {key === q.userAnswer && key !== q.correct && <span style={{ marginLeft: 'auto', color: 'var(--accent-rose)' }}>✗ Your pick</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {q.explanation && (
+                    <div style={{ marginTop: '10px', padding: '10px', borderRadius: '8px', background: 'rgba(102, 126, 234, 0.08)', fontSize: '0.9rem' }}>
+                      💡 {q.explanation}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {!isMCQ && algorithmicScores && (
           <div className="eval-section">
