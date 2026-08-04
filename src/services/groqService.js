@@ -7,6 +7,16 @@ import { GROQ_API_KEY, GROQ_API_URL, GROQ_MODEL, GROQ_FALLBACK_MODEL } from '../
 import { MAINS_SYLLABUS, PRELIMS_SYLLABUS, CSAT_SYLLABUS, CURRENT_AFFAIRS_CATEGORIES } from '../data/syllabus';
 
 async function callGroqAPI(messages, temperature = 0.7, maxTokens = 2048) {
+  const enhancedMessages = messages.map(msg => {
+    if (msg.role === 'system') {
+      return {
+        ...msg,
+        content: `${msg.content}\n\n[SYSTEM CONTEXT]\nToday's real date is ${new Date().toDateString()}. Use this for any time-sensitive context or knowledge cutoff bridging.`
+      };
+    }
+    return msg;
+  });
+
   try {
     const response = await fetch(GROQ_API_URL, {
       method: 'POST',
@@ -16,7 +26,7 @@ async function callGroqAPI(messages, temperature = 0.7, maxTokens = 2048) {
       },
       body: JSON.stringify({
         model: GROQ_MODEL,
-        messages,
+        messages: enhancedMessages,
         temperature,
         max_tokens: maxTokens,
         stream: false,
@@ -33,7 +43,7 @@ async function callGroqAPI(messages, temperature = 0.7, maxTokens = 2048) {
         },
         body: JSON.stringify({
           model: GROQ_FALLBACK_MODEL,
-          messages,
+          messages: enhancedMessages,
           temperature,
           max_tokens: maxTokens,
           stream: false,

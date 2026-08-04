@@ -198,7 +198,7 @@ export default function EssayModule() {
                       )}
                     </div>
                     <button
-                      className="btn btn-primary"
+                      className="btn btn-primary btn-lg"
                       onClick={() => handleSubmit(activePaper, idx)}
                       disabled={evaluating || !(answers[key]?.trim())}
                     >

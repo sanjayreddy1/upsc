@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuestionGenerator } from '../../hooks/useQuestionGenerator';
 import { useEvaluation } from '../../hooks/useEvaluation';
 import { useStreak } from '../../hooks/useStreak';
@@ -10,6 +10,7 @@ export default function DailyTest() {
   const [userAnswers, setUserAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [mcqResult, setMcqResult] = useState(null);
+  const resultRef = useRef(null);
 
   const { loading, error, getMCQs } = useQuestionGenerator();
   const { evaluateMCQ } = useEvaluation();
@@ -38,6 +39,12 @@ export default function DailyTest() {
       generateDailyQuestions();
     }
   }, [generateDailyQuestions]);
+
+  useEffect(() => {
+    if (submitted && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [submitted]);
 
   const handleAnswer = (index, option) => {
     setUserAnswers((prev) => ({ ...prev, [index]: option }));
@@ -96,8 +103,8 @@ export default function DailyTest() {
               key={idx}
               index={idx}
               question={q}
-              selectedAnswer={userAnswers[idx]}
-              onSelect={(opt) => handleAnswer(idx, opt)}
+              userAnswer={userAnswers[idx]}
+              onAnswer={(idx, opt) => handleAnswer(idx, opt)}
               showResult={false}
             />
           ))}
@@ -119,7 +126,7 @@ export default function DailyTest() {
       )}
 
       {submitted && mcqResult && (
-        <div className="daily-results animate-slide-up">
+        <div className="daily-results animate-slide-up" ref={resultRef}>
           <div className="glass-card result-summary">
             <h2>Test Evaluation</h2>
             <div className="result-stats">
@@ -149,7 +156,7 @@ export default function DailyTest() {
                 key={idx}
                 index={idx}
                 question={q}
-                selectedAnswer={userAnswers[idx]}
+                userAnswer={userAnswers[idx]}
                 showResult={true}
               />
             ))}

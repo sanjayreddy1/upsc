@@ -435,5 +435,8 @@ body {
     --sidebar-width: 0px;
     --header-height: 60px;
   }
+  .btn-lg {
+    width: 100%;
+  }
 }
 .pyq-inline-tag { color: var(--accent-emerald); font-weight: 700; font-size: 0.9em; }
