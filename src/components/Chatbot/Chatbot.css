@@ -27,8 +27,8 @@
 }
 
 .chatbot-window {
-  width: 380px;
-  height: 550px;
+  width: 450px;
+  height: 650px;
   display: flex;
   flex-direction: column;
   overflow: hidden;

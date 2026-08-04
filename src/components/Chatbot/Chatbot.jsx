@@ -13,6 +13,7 @@ export default function Chatbot() {
   });
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [statusText, setStatusText] = useState('');
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -28,17 +29,25 @@ export default function Chatbot() {
     setMessages(newMessages);
     setInput('');
     setLoading(true);
+    setStatusText('Analyzing request...');
 
     try {
-      // Send history to API for context
-      const chatHistory = messages.map(m => ({ role: m.role, content: m.content })).slice(-10); // Keep last 10 messages for context
-      const response = await chatWithAI(userMessage.content, chatHistory);
+      // Send empty history to AI so each chat starts fresh as requested
+      const response = await chatWithAI(userMessage.content, [], (status) => setStatusText(status));
       
-      setMessages([...newMessages, { role: 'assistant', content: response }]);
+      let finalContent = response;
+      let finalImageUrls = [];
+      if (typeof response === 'object' && response !== null && !Array.isArray(response)) {
+        finalContent = response.text;
+        finalImageUrls = response.imageUrls || [];
+      }
+      
+      setMessages([...newMessages, { role: 'assistant', content: finalContent, imageUrls: finalImageUrls }]);
     } catch (err) {
       setMessages([...newMessages, { role: 'assistant', content: 'Error: Could not fetch response. ' + err.message }]);
     } finally {
       setLoading(false);
+      setStatusText('');
     }
   };
 
@@ -82,18 +91,32 @@ export default function Chatbot() {
             )}
             {messages.map((msg, idx) => (
               <div key={idx} className={`chat-message ${msg.role}`}>
-                <div className="chat-bubble">
-                  {/* The response is in plain text as requested */}
-                  {msg.content}
+                <div className="chat-bubble" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {msg.imageUrls && msg.imageUrls.length > 0 && (
+                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                      {msg.imageUrls.map((url, i) => (
+                        <img 
+                          key={i}
+                          src={url} 
+                          alt={`Search Result ${i+1}`} 
+                          style={{ width: '200px', height: '150px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} 
+                        />
+                      ))}
+                    </div>
+                  )}
+                  <span>{msg.content}</span>
                 </div>
               </div>
             ))}
             {loading && (
               <div className="chat-message assistant">
-                <div className="chat-bubble typing">
-                  <span className="dot"></span>
-                  <span className="dot"></span>
-                  <span className="dot"></span>
+                <div className="chat-bubble typing" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                  </div>
+                  {statusText && <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{statusText}</span>}
                 </div>
               </div>
             )}

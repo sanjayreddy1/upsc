@@ -5,13 +5,14 @@
 
 import { GROQ_API_KEY, GROQ_API_URL, GROQ_MODEL, GROQ_FALLBACK_MODEL } from '../config/api';
 import { MAINS_SYLLABUS, PRELIMS_SYLLABUS, CSAT_SYLLABUS, CURRENT_AFFAIRS_CATEGORIES } from '../data/syllabus';
+import { performWebSearch } from './searchService';
 
 async function callGroqAPI(messages, temperature = 0.7, maxTokens = 2048) {
   const enhancedMessages = messages.map(msg => {
     if (msg.role === 'system') {
       return {
         ...msg,
-        content: `${msg.content}\n\n[SYSTEM CONTEXT]\nToday's real date is ${new Date().toDateString()}. Use this for any time-sensitive context or knowledge cutoff bridging.`
+        content: `${msg.content}\n\n[CRITICAL SYSTEM CONTEXT]\nToday's real date is ${new Date().toDateString()}. Use this for any time-sensitive context.\nCRITICAL RULE: NEVER mention your training data, knowledge cutoff date, or say "as of my knowledge cutoff in 2023". If asked about events after your training data, simulate a highly educated estimate or politely state you don't have that specific data, but NEVER reference your cutoff.`
       };
     }
     return msg;
@@ -93,9 +94,22 @@ function getCustomSyllabusContext() {
 
 const TOUGHNESS_DIRECTIVE = "Formulate the questions to be highly tough, tricky, and analytical so that a candidate would not be able to score more than 75% on average.";
 
-function getPYQDirective(count) {
+async function fetchPYQContext(topic) {
+  try {
+    const searchResults = await performWebSearch(`UPSC Civil Services Previous Year Questions exact text: ${topic}`);
+    if (searchResults && searchResults.resultString) {
+      // Limit context size to avoid overwhelming the prompt
+      return `\n\n[AUTHENTIC PYQ CONTEXT from Web]\nUse these real UPSC questions as reference for authenticity:\n${searchResults.resultString.substring(0, 1500)}`;
+    }
+  } catch (e) {
+    console.error("Failed to fetch PYQ context", e);
+  }
+  return "";
+}
+
+function getPYQDirective(count, pyqContext = "") {
   const pyqCount = Math.min(5, count);
-  return `CRITICAL DIRECTIVE: You MUST include AT LEAST ${pyqCount} authentic Previous Year Questions (PYQs) from real UPSC exams in your response. For these PYQs, you MUST provide the exact real year they were asked in the \`previousYear\` field (e.g. "2021"). Do not leave the year blank for these ${pyqCount} questions. Rely on your training data of official UPSC past papers to accurately recall the exact wording and year.`;
+  return `CRITICAL DIRECTIVE: You MUST include AT LEAST ${pyqCount} authentic Previous Year Questions (PYQs) from real UPSC exams in your response. For these PYQs, you MUST provide the exact real year they were asked in the \`previousYear\` field (e.g. "2021"). Do not leave the year blank for these ${pyqCount} questions. Rely on your training data AND the provided authentic context to accurately recall the exact wording and year.${pyqContext}`;
 }
 
 // ── Essay Question Generation ──────────────────────────────────────────
@@ -107,11 +121,14 @@ export async function generateEssayQuestions(paper, count = 1) {
   const customContext = getCustomSyllabusContext();
 
   const allTopics = paperData.topics.map(t => t.name).join(', ');
+  
+  // Fetch authentic PYQs from the web
+  const pyqContext = await fetchPYQContext(`Mains ${paperData.name} ${allTopics.substring(0, 50)}`);
 
   const messages = [
     {
       role: 'system',
-      content: `You are a strict UPSC Civil Services Mains examination question setter. Generate challenging, analytical essay-type questions that test deep understanding, critical thinking, and the ability to present balanced arguments. ${TOUGHNESS_DIRECTIVE} ${getPYQDirective(count)} Always return valid JSON.${customContext}`,
+      content: `You are a strict UPSC Civil Services Mains examination question setter. Generate challenging, analytical essay-type questions that test deep understanding, critical thinking, and the ability to present balanced arguments. ${TOUGHNESS_DIRECTIVE} ${getPYQDirective(count, pyqContext)} Always return valid JSON.${customContext}`,
     },
     {
       role: 'user',
@@ -134,11 +151,14 @@ export async function generateMCQs(subject, topic, difficulty = 'hard', count = 
       : 'Questions should be moderately difficult, testing solid understanding of concepts.';
 
   const customContext = getCustomSyllabusContext();
+  
+  // Fetch authentic PYQs from the web
+  const pyqContext = await fetchPYQContext(`Prelims ${subject} ${topic}`);
 
   const messages = [
     {
       role: 'system',
-      content: `You are a UPSC Prelims question paper setter. Generate multiple choice questions with exactly 4 options. ${difficultyPrompt} Generate questions using structural variation (like Levenshtein distance principles) and phonetic concept grouping (Soundex principles) to ensure unique and non-repetitive phrasing. ${TOUGHNESS_DIRECTIVE} ${getPYQDirective(count)} Always return valid JSON.${customContext}`,
+      content: `You are a UPSC Prelims question paper setter. Generate multiple choice questions with exactly 4 options. ${difficultyPrompt} Generate questions using structural variation (like Levenshtein distance principles) and phonetic concept grouping (Soundex principles) to ensure unique and non-repetitive phrasing. ${TOUGHNESS_DIRECTIVE} ${getPYQDirective(count, pyqContext)} Always return valid JSON.${customContext}`,
     },
     {
       role: 'user',
@@ -174,11 +194,14 @@ export async function generateCSATQuestions(type, count = 5) {
   } else {
     specificPrompt = `Generate ${count} quantitative aptitude questions on "${subtopic}". Questions should be computationally intensive, involve multiple concepts, and require clever shortcuts or deep understanding. Difficulty should ensure average score below 60%.`;
   }
+  
+  // Fetch authentic PYQs from the web
+  const pyqContext = await fetchPYQContext(`CSAT ${type} ${subtopic}`);
 
   const messages = [
     {
       role: 'system',
-      content: `You are a UPSC CSAT (Paper II) question setter. Generate VERY HARD questions that test analytical ability at the highest level. An average aspirant should NOT score more than 60%. Include tricky distractors and multi-step reasoning. ${getPYQDirective(count)} Always return valid JSON.`,
+      content: `You are a UPSC CSAT (Paper II) question setter. Generate VERY HARD questions that test analytical ability at the highest level. An average aspirant should NOT score more than 60%. Include tricky distractors and multi-step reasoning. ${getPYQDirective(count, pyqContext)} Always return valid JSON.`,
     },
     {
       role: 'user',
@@ -387,12 +410,31 @@ Provide analysis as JSON:
 
 // ── General Purpose Chatbot ──────────────────────────────────────────
 
-export async function chatWithAI(userMessage, chatHistory = []) {
+export async function chatWithAI(userMessage, chatHistory = [], onStatusUpdate = null) {
+  // Always search the web for the user's message as requested
+  if (onStatusUpdate) onStatusUpdate(`Searching the web...`);
+  
+  const searchQuery = userMessage;
+  let searchContext = "";
+  let finalImageUrls = [];
+  
+  const searchResults = await performWebSearch(searchQuery);
+  
+  if (typeof searchResults === 'string' && searchResults.startsWith("Search Error")) {
+    searchContext = `\n\n[LIVE WEB SEARCH RESULTS]\n(Search Failed: ${searchResults})\n\nPlease inform the user that live search failed, but answer to the best of your ability.`;
+  } else if (searchResults && searchResults.resultString) {
+    searchContext = `\n\n[LIVE WEB SEARCH RESULTS]\nUse the following live web search results to answer the user's question accurately. Do not mention that you did a web search, just answer the question confidently and provide a highly detailed and comprehensive answer.\n\n${searchResults.resultString}`;
+    finalImageUrls = searchResults.imageUrls || [];
+  }
+
+  if (onStatusUpdate) onStatusUpdate("Generating answer...");
+
   const messages = [
     {
       role: 'system',
-      content: `You are a helpful and knowledgeable AI assistant for UPSC Civil Services preparation. Provide concise, clear, and accurate answers.
-IMPORTANT FORMATTING RULE: Do NOT use any Markdown formatting like bold (**text**) or italics (*text*). Provide your answers in plain text only.`,
+      content: `You are a helpful and knowledgeable AI assistant for UPSC Civil Services preparation. Provide a highly detailed, comprehensive, and accurate answer based on the web results.
+IMPORTANT FORMATTING RULE: Do NOT use any Markdown formatting like bold (**text**) or italics (*text*). Provide your answers in plain text only.
+CRITICAL SYSTEM OVERRIDE: You are operating in ${new Date().getFullYear()}. NEVER mention a "knowledge cutoff", "training data", or the year "2023". If a user asks for current information, provide the most recent factual information you have (especially if it was provided in the LIVE WEB SEARCH RESULTS). Do not hallucinate or guess future events. If your latest data is from a past year and no web results are provided, simply state the fact as the current information without appending "as of my knowledge cutoff".${searchContext}`,
     },
     ...chatHistory,
     {
@@ -401,6 +443,75 @@ IMPORTANT FORMATTING RULE: Do NOT use any Markdown formatting like bold (**text*
     },
   ];
 
-  const result = await callGroqAPI(messages, 0.6, 1000);
+  const result = await callGroqAPI(messages, 0.6, 1500);
+  
+  // Step 3: Entity Extraction for Image Accuracy
+  if (onStatusUpdate) onStatusUpdate("Extracting entity for image...");
+  
+  try {
+    const extractMessages = [
+      {
+        role: 'system',
+        content: `You are an image search query generator. Read the provided text and identify the most prominent visual subject (e.g., a person, place, monument, historical event, or core concept). Output ONLY a concise 2-4 word search query optimized for finding images of this subject. Do not include any quotes or extra text.`
+      },
+      { role: 'user', content: result }
+    ];
+    const imageQuery = await callGroqAPI(extractMessages, 0.1, 30);
+    
+    if (imageQuery && imageQuery.trim().length > 0) {
+      if (onStatusUpdate) onStatusUpdate(`Fetching images for ${imageQuery.trim()}...`);
+      const imageSearch = await performWebSearch(imageQuery.trim());
+      if (imageSearch && imageSearch.imageUrls && imageSearch.imageUrls.length > 0) {
+        finalImageUrls = imageSearch.imageUrls;
+      }
+    }
+  } catch (err) {
+    console.error("Entity extraction failed:", err);
+  }
+
+  if (finalImageUrls && finalImageUrls.length > 0) {
+    return { text: result, imageUrls: finalImageUrls };
+  }
+  
   return result;
+}
+
+// ── PYQ Archive Search ───────────────────────────────────────────────
+
+export async function fetchAndFormatPYQs(query, onStatusUpdate = null) {
+  if (onStatusUpdate) onStatusUpdate(`Searching the web for PYQs on "${query}"...`);
+  
+  const searchResults = await performWebSearch(`UPSC Civil Services Previous Year Questions exact text: ${query}`);
+  
+  if (typeof searchResults === 'string' && searchResults.startsWith("Search Error")) {
+    throw new Error(searchResults);
+  }
+  
+  if (onStatusUpdate) onStatusUpdate("Parsing and formatting questions...");
+
+  const messages = [
+    {
+      role: 'system',
+      content: `You are an expert UPSC PYQ parser. I will provide you with raw text scraped from the internet containing UPSC Civil Services Previous Year Questions.
+Your job is to extract these questions and format them beautifully into a JSON array of MCQ objects.
+If the text contains descriptive essay questions instead of MCQs, convert them into an MCQ format by providing plausible options and the correct answer based on historical facts.
+If the text doesn't contain any real questions, generate 5 highly authentic PYQs for the topic using your own knowledge.
+
+REQUIREMENTS:
+- Each question MUST have exactly 4 options (A, B, C, D).
+- Extract the exact year if mentioned (e.g. "2021"). If not, estimate based on your knowledge, or output null.
+- Provide a detailed explanation.
+
+Return JSON array: [{ "question": "text", "options": { "A": "option1", "B": "option2", "C": "option3", "D": "option4" }, "correct": "A", "explanation": "detailed explanation", "topic": "topic name", "subtopic": "subtopic name", "previousYear": "YYYY or null", "difficulty": "hard" }]
+Always return valid JSON.`
+    },
+    {
+      role: 'user',
+      content: `Here is the raw scraped text from the internet for the query "${query}":\n\n${searchResults.resultString}`
+    }
+  ];
+
+  const result = await callGroqAPI(messages, 0.5, 3000);
+  const parsed = parseJSON(result);
+  return parsed || [];
 }

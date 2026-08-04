@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { path: '/current-affairs', label: 'Current Affairs', icon: '📰', description: 'MCQ Practice' },
   { path: '/csat', label: 'CSAT', icon: '🧮', description: 'RC, LR, QA' },
   { path: '/prelims', label: 'Prelims Bits', icon: '🎯', description: 'Subject MCQs' },
+  { path: '/pyq', label: 'PYQ Archive', icon: '🏛️', description: 'Live Web PYQ Search' },
   { path: '/ocr', label: 'OCR Scanner', icon: '📷', description: 'Scan & Analyze' },
   { path: '/syllabus', label: 'Upload Syllabus', icon: '📑', description: 'Custom AI Prep' },
 ];

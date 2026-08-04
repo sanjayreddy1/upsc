@@ -104,7 +104,7 @@ export default function DailyTest() {
               index={idx}
               question={q}
               userAnswer={userAnswers[idx]}
-              onAnswer={(idx, opt) => handleAnswer(idx, opt)}
+              onAnswer={handleAnswer}
               showResult={false}
             />
           ))}

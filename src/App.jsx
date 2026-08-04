@@ -13,6 +13,7 @@ import OCRScanner from './components/OCR/OCRScanner';
 import Chatbot from './components/Chatbot/Chatbot';
 import UploadSyllabus from './components/Syllabus/UploadSyllabus';
 import DailyTest from './components/DailyTest/DailyTest';
+import PYQModule from './components/PYQ/PYQModule';
 import { useNotification } from './hooks/useNotification';
 import { initNotificationEngine } from './services/notificationEngine';
 import './App.css';
@@ -28,6 +29,7 @@ const PAGE_TITLES = {
   '/flashcards': { title: 'Global Flashcards', subtitle: 'Quick Revision' },
   '/ocr': { title: 'OCR Scanner', subtitle: 'Scan & Analyze Documents' },
   '/syllabus': { title: 'Custom Syllabus', subtitle: 'Upload & Generate Custom Questions' },
+  '/pyq': { title: 'PYQ Archive', subtitle: 'Live Web PYQ Search' },
 };
 
 function AppContent() {
@@ -63,6 +65,7 @@ function AppContent() {
             <Route path="/flashcards" element={<FlashcardsModule />} />
             <Route path="/ocr" element={<OCRScanner />} />
             <Route path="/syllabus" element={<UploadSyllabus />} />
+            <Route path="/pyq" element={<PYQModule />} />
           </Routes>
         </div>
       </main>
