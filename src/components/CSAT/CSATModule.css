@@ -1,0 +1,62 @@
+.csat-module { padding: 8px 0; }
+.csat-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 24px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.csat-header h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 6px; }
+.csat-desc { font-size: 0.85rem; color: var(--text-secondary); }
+
+.csat-warning {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; margin-bottom: 20px;
+  border-left: 3px solid var(--accent-rose);
+  font-size: 0.85rem; color: var(--text-secondary);
+}
+.csat-warning span { font-size: 1.3rem; }
+
+.csat-sections {
+  display: flex; gap: 10px; margin-bottom: 24px;
+  overflow-x: auto; padding-bottom: 4px;
+}
+
+.csat-section-btn {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card); font-family: 'Inter', sans-serif;
+  color: var(--text-secondary); white-space: nowrap;
+  transition: all var(--transition-normal); min-width: 200px;
+}
+
+.csat-section-btn:hover { border-color: var(--border-color-hover); color: var(--text-primary); }
+.csat-section-btn.active {
+  border-color: var(--accent-blue);
+  background: rgba(102, 126, 234, 0.1);
+  color: var(--text-primary);
+}
+
+.section-icon { font-size: 1.5rem; flex-shrink: 0; }
+.section-name { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-primary); }
+.section-desc { display: block; font-size: 0.7rem; color: var(--text-muted); }
+
+.csat-passage {
+  padding: 24px; margin-bottom: 20px;
+  border-left: 3px solid var(--accent-cyan);
+}
+.csat-passage h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; color: var(--accent-cyan); }
+.csat-passage p { font-size: 0.9rem; line-height: 1.8; color: var(--text-secondary); }
+
+.csat-questions { margin-bottom: 24px; }
+
+.score-warning {
+  padding: 12px 20px; background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-sm); font-size: 0.85rem;
+  color: var(--accent-amber); font-weight: 600;
+}
+
+.error-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; margin-bottom: 20px;
+  border-left: 3px solid var(--accent-amber);
+}

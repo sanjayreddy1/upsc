@@ -1,0 +1,283 @@
+import { useRef } from 'react';
+import html2pdf from 'html2pdf.js';
+import ProgressRing from '../Common/ProgressRing';
+import './EvaluationPanel.css';
+
+export default function EvaluationPanel({ evaluation, onClose }) {
+  const evalRef = useRef(null);
+
+  if (!evaluation) return null;
+
+  const { type = 'essay', finalScore, percentage, algorithmicScores, aiEvaluation } = evaluation;
+
+  // Determine score representation
+  const isMCQ = type === 'mcq';
+  const displayPercentage = isMCQ ? percentage : finalScore;
+  const maxScore = isMCQ ? evaluation.totalQuestions * 2 : 20; // 2 marks per MCQ, 20 max for Essay
+  const calculatedScore = isMCQ ? evaluation.rawScore : Math.round((displayPercentage / 100) * 20);
+
+  const handleDownloadPDF = () => {
+    const element = evalRef.current;
+    if (!element) return;
+
+    const opt = {
+      margin:       10,
+      filename:     'UPSC_Evaluation_Report.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().from(element).set(opt).save();
+  };
+
+  const handleShare = async () => {
+    const feedbackText = isMCQ 
+      ? `Correct: ${evaluation.correct}, Incorrect: ${evaluation.incorrect} (Negative marks applied)`
+      : `Feedback: ${aiEvaluation?.overallFeedback}`;
+
+    const shareData = {
+      title: 'My UPSC Answer Evaluation',
+      text: `I just scored ${displayPercentage}% (${calculatedScore}/${maxScore}) on my UPSC answer practice!\n\n${feedbackText}`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.text);
+        alert('Evaluation text copied to clipboard!');
+      }
+    } catch (err) {
+      console.warn('Error sharing', err);
+    }
+  };
+
+  return (
+    <div className="evaluation-overlay animate-fade-in">
+      {/* Action Bar floating at the top of the overlay */}
+      <div className="eval-action-bar">
+        <button className="btn btn-secondary" onClick={handleDownloadPDF}>
+          📥 Download PDF
+        </button>
+        <button className="btn btn-secondary" onClick={handleShare}>
+          🔗 Share
+        </button>
+        <button className="btn btn-icon btn-secondary" onClick={onClose}>✕</button>
+      </div>
+
+      <div className="evaluation-panel glass-card animate-scale-in" ref={evalRef}>
+        
+        {/* Handwritten Teacher's Mark */}
+        <div className="teacher-mark">
+          {calculatedScore}/{maxScore}
+        </div>
+
+        <div className="eval-header">
+          <h2>📝 {isMCQ ? 'MCQ Evaluation Report' : 'Essay Evaluation Report'}</h2>
+        </div>
+
+        {/* ── Overall Score ── */}
+        <div className="eval-score-section">
+          <ProgressRing
+            progress={displayPercentage}
+            size={120}
+            strokeWidth={8}
+            label="Final Score"
+          />
+          <div className="eval-score-breakdown">
+            {isMCQ ? (
+              <>
+                <div className="score-item">
+                  <span className="score-label">Correct Answers (+2)</span>
+                  <span className="score-value success-text">{evaluation.correct}</span>
+                </div>
+                <div className="score-item">
+                  <span className="score-label">Incorrect Answers (-0.66)</span>
+                  <span className="score-value danger-text">{evaluation.incorrect}</span>
+                </div>
+                <div className="score-item">
+                  <span className="score-label">Unanswered</span>
+                  <span className="score-value muted-text">{evaluation.unanswered}</span>
+                </div>
+                <div className="score-item">
+                  <span className="score-label">Total Questions</span>
+                  <span className="score-value">{evaluation.totalQuestions}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="score-item">
+                  <span className="score-label">AI Evaluation</span>
+                  <span className="score-value">{aiEvaluation?.percentage || 0}%</span>
+                </div>
+                <div className="score-item">
+                  <span className="score-label">Algorithm Score</span>
+                  <span className="score-value">{algorithmicScores?.combined || 0}%</span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {!isMCQ && algorithmicScores && (
+          <div className="eval-section">
+            <h3>🔬 Algorithmic Analysis</h3>
+            <div className="algo-grid">
+              <div className="algo-card">
+                <span className="algo-name">Jaro-Winkler</span>
+                <span className="algo-desc">Prefix similarity</span>
+                <div className="algo-bar">
+                  <div
+                    className="algo-bar-fill"
+                    style={{ width: `${algorithmicScores?.jaroWinkler || 0}%`, background: 'var(--accent-blue)' }}
+                  />
+                </div>
+                <span className="algo-value">{algorithmicScores?.jaroWinkler || 0}%</span>
+              </div>
+              <div className="algo-card">
+                <span className="algo-name">Levenshtein</span>
+                <span className="algo-desc">Edit distance</span>
+                <div className="algo-bar">
+                  <div
+                    className="algo-bar-fill"
+                    style={{ width: `${algorithmicScores?.levenshtein || 0}%`, background: 'var(--accent-violet)' }}
+                  />
+                </div>
+                <span className="algo-value">{algorithmicScores?.levenshtein || 0}%</span>
+              </div>
+              <div className="algo-card">
+                <span className="algo-name">Soundex</span>
+                <span className="algo-desc">Phonetic match</span>
+                <div className="algo-bar">
+                  <div
+                    className="algo-bar-fill"
+                    style={{ width: `${algorithmicScores?.soundex || 0}%`, background: 'var(--accent-emerald)' }}
+                  />
+                </div>
+                <span className="algo-value">{algorithmicScores?.soundex || 0}%</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!isMCQ && aiEvaluation?.scores && (
+          <div className="eval-section">
+            <h3>🤖 AI Evaluation Scores</h3>
+            <div className="ai-scores-grid">
+              {Object.entries(aiEvaluation.scores).map(([key, value]) => (
+                <div key={key} className="ai-score-item">
+                  <span className="ai-score-label">{formatLabel(key)}</span>
+                  <div className="ai-score-bar">
+                    <div className="ai-score-bar-fill" style={{ width: `${value * 10}%` }} />
+                  </div>
+                  <span className="ai-score-value">{value}/10</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!isMCQ && aiEvaluation?.strengths?.length > 0 && (
+          <div className="eval-section">
+            <h3>✅ Strengths</h3>
+            <ul className="eval-list success">
+              {aiEvaluation.strengths.map((s, i) => (
+                <li key={i}>{s}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {!isMCQ && aiEvaluation?.weaknesses?.length > 0 && (
+          <div className="eval-section">
+            <h3>⚠️ Areas to Improve</h3>
+            <ul className="eval-list warning">
+              {aiEvaluation.weaknesses.map((w, i) => (
+                <li key={i}>{w}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {!isMCQ && aiEvaluation?.tipsAndTricks?.length > 0 && (
+          <div className="eval-section">
+            <h3>💡 Tips & Tricks</h3>
+            <ul className="eval-list info">
+              {aiEvaluation.tipsAndTricks.map((t, i) => (
+                <li key={i}>{t}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {!isMCQ && aiEvaluation?.howToImprove?.length > 0 && (
+          <div className="eval-section">
+            <h3>📈 How to Improve</h3>
+            <ol className="eval-list steps">
+              {aiEvaluation.howToImprove.map((h, i) => (
+                <li key={i}>{h}</li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {!isMCQ && aiEvaluation?.topicsToStudy?.length > 0 && (
+          <div className="eval-section">
+            <h3>📖 Topics to Study</h3>
+            <div className="topics-tags">
+              {aiEvaluation.topicsToStudy.map((t, i) => (
+                <span key={i} className="badge badge-primary">{t}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!isMCQ && aiEvaluation?.modelAnswerOutline && (
+          <div className="eval-section">
+            <h3>📋 Ideal Answer Framework</h3>
+            <p className="model-answer">{aiEvaluation.modelAnswerOutline}</p>
+          </div>
+        )}
+
+        {!isMCQ && aiEvaluation?.overallFeedback && (
+          <div className="eval-section">
+            <h3>💬 Overall Feedback</h3>
+            <p className="overall-feedback">{aiEvaluation.overallFeedback}</p>
+          </div>
+        )}
+
+        {!isMCQ && aiEvaluation?.additionalSuggestions?.length > 0 && (
+          <div className="eval-section">
+            <h3>🎯 Additional Suggestions</h3>
+            <ul className="eval-list info">
+              {aiEvaluation.additionalSuggestions.map((s, i) => (
+                <li key={i}>{s}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="eval-footer">
+          {isMCQ ? (
+            <p className="eval-word-count">
+              Negative Penalty Applied: <strong>-{Math.abs(evaluation.incorrect * 0.66).toFixed(2)} marks</strong>
+            </p>
+          ) : (
+            <p className="eval-word-count">
+              Word Count: <strong>{evaluation.wordCount}</strong>
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function formatLabel(key) {
+  return key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (s) => s.toUpperCase())
+    .trim();
+}

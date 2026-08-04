@@ -1,0 +1,152 @@
+.mcq-card {
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.mcq-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.mcq-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--gradient-primary);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mcq-question {
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.7;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+
+.mcq-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mcq-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  width: 100%;
+}
+
+.mcq-option:hover:not(:disabled) {
+  border-color: var(--accent-blue);
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.mcq-option.selected {
+  border-color: var(--accent-blue);
+  background: rgba(102, 126, 234, 0.12);
+}
+
+.mcq-option.correct {
+  border-color: var(--accent-emerald) !important;
+  background: rgba(16, 185, 129, 0.12) !important;
+}
+
+.mcq-option.incorrect {
+  border-color: var(--accent-rose) !important;
+  background: rgba(244, 63, 94, 0.12) !important;
+}
+
+.mcq-option:disabled {
+  cursor: default;
+}
+
+.option-key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  transition: all var(--transition-normal);
+}
+
+.mcq-option.selected .option-key {
+  background: var(--gradient-primary);
+  border-color: transparent;
+  color: white;
+}
+
+.mcq-option.correct .option-key {
+  background: var(--gradient-success) !important;
+  border-color: transparent !important;
+  color: white !important;
+}
+
+.mcq-option.incorrect .option-key {
+  background: var(--gradient-danger) !important;
+  border-color: transparent !important;
+  color: white !important;
+}
+
+.option-text {
+  flex: 1;
+  line-height: 1.5;
+}
+
+.option-icon {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-emerald);
+  flex-shrink: 0;
+}
+
+.option-icon.wrong {
+  color: var(--accent-rose);
+}
+
+.mcq-explanation {
+  margin-top: 20px;
+  padding: 16px 20px;
+  background: rgba(102, 126, 234, 0.06);
+  border-left: 3px solid var(--accent-blue);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.mcq-explanation h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-blue);
+  margin-bottom: 8px;
+}
+
+.mcq-explanation p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.pyq-inline-tag { color: var(--accent-emerald); font-weight: 700; font-size: 0.9em; }

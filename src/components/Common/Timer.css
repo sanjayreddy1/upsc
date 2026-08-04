@@ -1,0 +1,72 @@
+.timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.timer.warning {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.timer.critical {
+  border-color: rgba(244, 63, 94, 0.3);
+  animation: pulse 1s infinite;
+}
+
+.timer-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+
+.timer-display {
+  font-size: 2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+}
+
+.timer.warning .timer-display {
+  color: var(--accent-amber);
+}
+
+.timer.critical .timer-display {
+  color: var(--accent-rose);
+}
+
+.timer-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.timer-bar {
+  width: 100%;
+  height: 3px;
+  background: var(--bg-glass);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.timer-bar-fill {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: 3px;
+  transition: width 1s linear;
+}
+
+.timer.warning .timer-bar-fill {
+  background: var(--gradient-warning);
+}
+
+.timer.critical .timer-bar-fill {
+  background: var(--gradient-danger);
+}

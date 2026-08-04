@@ -1,0 +1,61 @@
+.prelims-module { padding: 8px 0; }
+.prelims-header { margin-bottom: 24px; }
+.prelims-header h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 6px; }
+.prelims-desc { font-size: 0.85rem; color: var(--text-secondary); }
+
+.prelims-subjects {
+  display: flex; gap: 10px; margin-bottom: 16px;
+  overflow-x: auto; padding-bottom: 4px;
+}
+
+.subject-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 16px 20px; cursor: pointer; min-width: 100px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card); font-family: 'Inter', sans-serif;
+  color: var(--text-secondary);
+  transition: all var(--transition-normal);
+}
+
+.subject-btn:hover {
+  border-color: var(--subject-color, var(--accent-blue));
+  color: var(--text-primary);
+  transform: translateY(-2px);
+}
+
+.subject-btn.active {
+  border-color: var(--subject-color, var(--accent-blue));
+  background: rgba(102, 126, 234, 0.1);
+  color: var(--text-primary);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+}
+
+.subject-icon { font-size: 1.6rem; }
+.subject-name { font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+
+.prelims-subcats {
+  display: flex; gap: 8px; margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.prelims-questions { margin-bottom: 24px; }
+
+.generate-prompt {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px; text-align: center;
+}
+.generate-icon { font-size: 3rem; }
+.generate-prompt h3 { font-size: 1.1rem; font-weight: 700; }
+
+.error-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; margin-bottom: 20px;
+  border-left: 3px solid var(--accent-amber);
+}
+
+.score-warning {
+  padding: 12px 20px; background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-sm); font-size: 0.85rem;
+  color: var(--accent-amber); font-weight: 600;
+}
