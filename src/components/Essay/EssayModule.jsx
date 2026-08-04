@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuestionGenerator } from '../../hooks/useQuestionGenerator';
 import { useEvaluation } from '../../hooks/useEvaluation';
 import { useNotification } from '../../hooks/useNotification';
@@ -27,17 +27,17 @@ export default function EssayModule() {
   const { evaluating, evaluate } = useEvaluation();
   const { sendNotification } = useNotification();
 
-  useEffect(() => {
-    loadQuestions(activePaper);
-  }, [activePaper]);
-
-  const loadQuestions = async (paper) => {
+  const loadQuestions = useCallback(async (paper) => {
     if (questions[paper]) return;
     const q = await getEssayQuestions(paper);
     if (q?.length) {
       setQuestions((prev) => ({ ...prev, [paper]: q }));
     }
-  };
+  }, [questions, getEssayQuestions]);
+
+  useEffect(() => {
+    loadQuestions(activePaper);
+  }, [activePaper, loadQuestions]);
 
   const handleAnswerChange = (paper, idx, value) => {
     const key = `${paper}_${idx}`;

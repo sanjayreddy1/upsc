@@ -163,3 +163,19 @@
   background: rgba(255,255,255,0.2);
   border-radius: 10px;
 }
+
+@media (max-width: 768px) {
+  .flashcard {
+    height: 350px;
+  }
+  .flashcard-front,
+  .flashcard-back {
+    padding: 24px;
+  }
+  .flashcard-front p {
+    font-size: 1.4rem;
+  }
+  .flashcard-back p {
+    font-size: 1rem;
+  }
+}

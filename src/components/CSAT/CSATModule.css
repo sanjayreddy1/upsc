@@ -60,3 +60,9 @@
   padding: 16px 20px; margin-bottom: 20px;
   border-left: 3px solid var(--accent-amber);
 }
+
+@media (max-width: 768px) {
+  .csat-passage {
+    padding: 16px;
+  }
+}

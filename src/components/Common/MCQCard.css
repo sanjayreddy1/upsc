@@ -150,3 +150,22 @@
   line-height: 1.7;
 }
 .pyq-inline-tag { color: var(--accent-emerald); font-weight: 700; font-size: 0.9em; }
+
+@media (max-width: 768px) {
+  .mcq-card {
+    padding: 16px;
+  }
+  .mcq-question {
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+  }
+  .mcq-option {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+  .option-key {
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+  }
+}

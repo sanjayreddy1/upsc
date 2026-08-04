@@ -15,6 +15,17 @@ export default function DailyTest() {
   const { evaluateMCQ } = useEvaluation();
   const { markDailyTestComplete, completedToday } = useStreak();
 
+  const generateDailyQuestions = React.useCallback(async () => {
+    // Generate 10 mixed questions (e.g. History & Polity & Current Affairs)
+    // For speed, just fetch 10 random 'hard' questions from a broad subject like "General Studies"
+    const q = await getMCQs('General Studies', 'Mixed Mock Test (History, Polity, Economy, Geo)', 'hard', 10);
+    if (q && q.length > 0) {
+      setQuestions(q);
+      localStorage.setItem('daily_test_questions', JSON.stringify(q));
+      localStorage.setItem('daily_test_date', new Date().toLocaleDateString());
+    }
+  }, [getMCQs]);
+
   useEffect(() => {
     // Check if we already have today's questions cached
     const cached = localStorage.getItem('daily_test_questions');
@@ -26,18 +37,7 @@ export default function DailyTest() {
     } else {
       generateDailyQuestions();
     }
-  }, []);
-
-  const generateDailyQuestions = async () => {
-    // Generate 10 mixed questions (e.g. History & Polity & Current Affairs)
-    // For speed, just fetch 10 random 'hard' questions from a broad subject like "General Studies"
-    const q = await getMCQs('General Studies', 'Mixed Mock Test (History, Polity, Economy, Geo)', 'hard', 10);
-    if (q && q.length > 0) {
-      setQuestions(q);
-      localStorage.setItem('daily_test_questions', JSON.stringify(q));
-      localStorage.setItem('daily_test_date', new Date().toLocaleDateString());
-    }
-  };
+  }, [generateDailyQuestions]);
 
   const handleAnswer = (index, option) => {
     setUserAnswers((prev) => ({ ...prev, [index]: option }));
@@ -132,11 +132,11 @@ export default function DailyTest() {
                 <span className="stat-label">Incorrect</span>
               </div>
               <div className="stat-box">
-                <span className="stat-value text-yellow">{mcqResult.unattempted}</span>
+                <span className="stat-value text-yellow">{mcqResult.unanswered}</span>
                 <span className="stat-label">Skipped</span>
               </div>
               <div className="stat-box">
-                <span className="stat-value">{mcqResult.score.toFixed(2)}</span>
+                <span className="stat-value">{mcqResult.rawScore.toFixed(2)}</span>
                 <span className="stat-label">Total Score</span>
               </div>
             </div>
