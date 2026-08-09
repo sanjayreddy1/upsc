@@ -35,7 +35,8 @@ export default function Clock() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', margin: '20px 0', width: '100%' }}>
       <SplitFlapText 
         text={dateStr} 
-        fontSize="clamp(16px, 5vw, 28px)"
+        fontSize="clamp(14px, 5vw, 28px)"
+        gap="0.15em"
         padTo={12}
         charset="alphanumeric"
         tileColor="#0f172a"
@@ -44,7 +45,8 @@ export default function Clock() {
       />
       <SplitFlapText 
         text={timeStr} 
-        fontSize="clamp(24px, 7.5vw, 42px)"
+        fontSize="clamp(22px, 7.5vw, 42px)"
+        gap="0.15em"
         padTo={12}
         charset="alphanumeric"
         tileColor="#0f172a"
