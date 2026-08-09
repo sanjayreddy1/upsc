@@ -69,14 +69,32 @@ async function callGroqAPI(messages, temperature = 0.7, maxTokens = 2048) {
 }
 
 function parseJSON(text) {
-  // Extract JSON from markdown code blocks if present
   const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   const rawJSON = jsonMatch ? jsonMatch[1].trim() : text.trim();
+  
   try {
     return JSON.parse(rawJSON);
-  } catch {
+  } catch (e) {
+    const firstIndex = Math.min(
+      text.indexOf('[') === -1 ? Infinity : text.indexOf('['),
+      text.indexOf('{') === -1 ? Infinity : text.indexOf('{')
+    );
+    const lastIndex = Math.max(
+      text.lastIndexOf(']'),
+      text.lastIndexOf('}')
+    );
+
+    if (firstIndex !== Infinity && lastIndex !== -1 && lastIndex > firstIndex) {
+      const aggressiveJSON = text.substring(firstIndex, lastIndex + 1);
+      try {
+        return JSON.parse(aggressiveJSON);
+      } catch (e2) {
+        console.error('Aggressive JSON parse failed:', aggressiveJSON.substring(0, 200));
+      }
+    }
+
     console.error('Failed to parse JSON:', rawJSON.substring(0, 200));
-    return null;
+    throw new Error('AI returned an invalid format. Please try generating again.');
   }
 }
 

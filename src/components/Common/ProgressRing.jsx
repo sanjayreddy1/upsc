@@ -1,4 +1,5 @@
 import './ProgressRing.css';
+import CountUp from './CountUp';
 
 export default function ProgressRing({ progress, size = 80, strokeWidth = 6, color, label, sublabel }) {
   const radius = (size - strokeWidth) / 2;
@@ -35,7 +36,7 @@ export default function ProgressRing({ progress, size = 80, strokeWidth = 6, col
       </svg>
       <div className="progress-ring-text">
         <span className="progress-value" style={{ color: getColor() }}>
-          {Math.round(progress)}%
+          <CountUp from={0} to={Math.round(progress)} duration={2} />%
         </span>
       </div>
       {label && <span className="progress-label">{label}</span>}

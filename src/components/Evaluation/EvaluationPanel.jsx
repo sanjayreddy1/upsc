@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import html2pdf from 'html2pdf.js';
 import ProgressRing from '../Common/ProgressRing';
+import CountUp from '../Common/CountUp';
 import './EvaluationPanel.css';
 
 export default function EvaluationPanel({ evaluation, onClose }) {
@@ -71,7 +72,7 @@ export default function EvaluationPanel({ evaluation, onClose }) {
         
         {/* Handwritten Teacher's Mark */}
         <div className="teacher-mark">
-          {calculatedScore}/{maxScore}
+          <CountUp from={0} to={calculatedScore} duration={2} />/{maxScore}
         </div>
 
         <div className="eval-header">

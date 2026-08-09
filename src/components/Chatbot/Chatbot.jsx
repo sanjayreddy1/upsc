@@ -15,10 +15,18 @@ export default function Chatbot() {
   const [loading, setLoading] = useState(false);
   const [statusText, setStatusText] = useState('');
   const messagesEndRef = useRef(null);
+  const lastMessageRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem('chat_history', JSON.stringify(messages));
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length > 0) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg.role === 'assistant' && lastMessageRef.current) {
+        lastMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
   }, [messages]);
 
   const handleSend = async () => {
@@ -89,8 +97,14 @@ export default function Chatbot() {
                 <p>Hello! I am your UPSC AI Assistant. Ask me anything about the syllabus, exam patterns, or concepts!</p>
               </div>
             )}
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`chat-message ${msg.role}`}>
+            {messages.map((msg, idx) => {
+              const isLast = idx === messages.length - 1;
+              return (
+              <div 
+                key={idx} 
+                className={`chat-message ${msg.role}`}
+                ref={isLast && msg.role === 'assistant' ? lastMessageRef : null}
+              >
                 <div className="chat-bubble" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {msg.imageUrls && msg.imageUrls.length > 0 && (
                     <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
@@ -107,7 +121,8 @@ export default function Chatbot() {
                   <span>{msg.content}</span>
                 </div>
               </div>
-            ))}
+            );
+          })}
             {loading && (
               <div className="chat-message assistant">
                 <div className="chat-bubble typing" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>

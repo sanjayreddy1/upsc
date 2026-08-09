@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProgressRing from '../Common/ProgressRing';
 import FlashCard from '../Common/FlashCard';
+import Clock from '../Common/Clock';
 import { getEvaluationHistory, getMCQHistory } from '../../hooks/useEvaluation';
 import { useStreak } from '../../hooks/useStreak';
 import { ALL_SOCIOLOGY_FLASHCARDS } from '../../data/sociologyTopics';
@@ -107,6 +108,7 @@ export default function Dashboard() {
           <p className="dash-hero-subtitle">
             Your AI-powered companion for Civil Services preparation. Practice daily, track progress, and ace the exam.
           </p>
+          <Clock />
         </div>
         <div className="dash-hero-stats">
           <ProgressRing progress={avgEssayScore || 0} size={90} strokeWidth={7} label="Essay Avg" />
