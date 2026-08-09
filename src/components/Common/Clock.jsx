@@ -32,17 +32,19 @@ export default function Clock() {
   }, []);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', margin: '20px 0' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', margin: '20px 0', width: '100%' }}>
       <SplitFlapText 
         text={dateStr} 
-        fontSize={28}
+        fontSize="clamp(16px, 5vw, 28px)"
         padTo={12}
         charset="alphanumeric"
-        tileColor="#1e293b"
+        tileColor="#0f172a"
+        textColor="#f8fafc"
+        flipDuration={0.05}
       />
       <SplitFlapText 
         text={timeStr} 
-        fontSize={42}
+        fontSize="clamp(24px, 7.5vw, 42px)"
         padTo={12}
         charset="alphanumeric"
         tileColor="#0f172a"

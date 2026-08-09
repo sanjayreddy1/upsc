@@ -271,6 +271,10 @@
   .dash-hero-title {
     font-size: 1.4rem;
   }
+  
+  .dash-hero-stats {
+    justify-content: center;
+  }
 
   .module-grid {
     grid-template-columns: 1fr;
@@ -279,8 +283,13 @@
   .dash-two-cols {
     grid-template-columns: 1fr;
   }
+  
+  .exam-structure {
+    flex-direction: column;
+  }
 
   .stage-arrow {
     transform: rotate(90deg);
+    margin: 10px 0;
   }
 }
