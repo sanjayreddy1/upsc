@@ -116,10 +116,6 @@ export default function EvaluationPanel({ evaluation, onClose }) {
                   <span className="score-label">AI Evaluation</span>
                   <span className="score-value">{aiEvaluation?.percentage || 0}%</span>
                 </div>
-                <div className="score-item">
-                  <span className="score-label">Algorithm Score</span>
-                  <span className="score-value">{algorithmicScores?.combined || 0}%</span>
-                </div>
               </>
             )}
           </div>
@@ -195,47 +191,6 @@ export default function EvaluationPanel({ evaluation, onClose }) {
                   )}
                 </div>
               ))}
-            </div>
-          </div>
-        )}
-
-        {!isMCQ && algorithmicScores && (
-          <div className="eval-section">
-            <h3>🔬 Algorithmic Analysis</h3>
-            <div className="algo-grid">
-              <div className="algo-card">
-                <span className="algo-name">Jaro-Winkler</span>
-                <span className="algo-desc">Prefix similarity</span>
-                <div className="algo-bar">
-                  <div
-                    className="algo-bar-fill"
-                    style={{ width: `${algorithmicScores?.jaroWinkler || 0}%`, background: 'var(--accent-blue)' }}
-                  />
-                </div>
-                <span className="algo-value">{algorithmicScores?.jaroWinkler || 0}%</span>
-              </div>
-              <div className="algo-card">
-                <span className="algo-name">Levenshtein</span>
-                <span className="algo-desc">Edit distance</span>
-                <div className="algo-bar">
-                  <div
-                    className="algo-bar-fill"
-                    style={{ width: `${algorithmicScores?.levenshtein || 0}%`, background: 'var(--accent-violet)' }}
-                  />
-                </div>
-                <span className="algo-value">{algorithmicScores?.levenshtein || 0}%</span>
-              </div>
-              <div className="algo-card">
-                <span className="algo-name">Soundex</span>
-                <span className="algo-desc">Phonetic match</span>
-                <div className="algo-bar">
-                  <div
-                    className="algo-bar-fill"
-                    style={{ width: `${algorithmicScores?.soundex || 0}%`, background: 'var(--accent-emerald)' }}
-                  />
-                </div>
-                <span className="algo-value">{algorithmicScores?.soundex || 0}%</span>
-              </div>
             </div>
           </div>
         )}

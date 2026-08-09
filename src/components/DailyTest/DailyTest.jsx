@@ -109,17 +109,17 @@ export default function DailyTest() {
             />
           ))}
           
-          <div className="submit-section">
-            <p style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>
+          <div className="submit-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', marginTop: '24px' }}>
+            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.1rem', fontWeight: '500' }}>
               Attempted: {Object.keys(userAnswers).length} / 10
             </p>
             <button 
               className="btn btn-primary btn-lg" 
               onClick={handleSubmit}
               disabled={Object.keys(userAnswers).length < 10}
-              style={{ width: '100%', maxWidth: '300px' }}
+              style={{ width: '100%', maxWidth: '350px', fontSize: '1.2rem', padding: '16px', borderRadius: '12px', boxShadow: '0 8px 16px rgba(var(--primary-rgb), 0.2)' }}
             >
-              Submit Test & Save Streak
+              ✅ Evaluate & Save Streak
             </button>
           </div>
         </div>

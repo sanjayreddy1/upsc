@@ -141,18 +141,25 @@ export default function CSATModule() {
           </div>
 
           {!submitted && (
-            <div className="ca-submit-area">
-              <span className="answers-count">
+            <div className="ca-submit-area" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', marginTop: '24px' }}>
+              <span className="answers-count" style={{ fontSize: '1.1rem', fontWeight: '500' }}>
                 {Object.keys(userAnswers).length} / {questionData.questions.length} answered
               </span>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button className="btn btn-secondary btn-lg" onClick={() => { setQuestionData(null); setUserAnswers({}); }}>
-                  🔄 Generate New Set
-                </button>
-                <button className="btn btn-success btn-lg" onClick={handleSubmit} disabled={Object.keys(userAnswers).length === 0}>
-                  ✅ Submit Answers
-                </button>
-              </div>
+              <button 
+                className="btn btn-success btn-lg" 
+                onClick={handleSubmit} 
+                disabled={Object.keys(userAnswers).length === 0}
+                style={{ width: '100%', maxWidth: '350px', fontSize: '1.2rem', padding: '16px', borderRadius: '12px', boxShadow: '0 8px 16px rgba(67, 233, 123, 0.2)' }}
+              >
+                ✅ Evaluate
+              </button>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => { setQuestionData(null); setUserAnswers({}); }}
+                style={{ marginTop: '8px' }}
+              >
+                🔄 Generate New Set
+              </button>
             </div>
           )}
 
