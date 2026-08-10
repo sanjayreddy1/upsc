@@ -94,3 +94,40 @@ export async function fetchPYQPdfs(query) {
     throw new Error(`Could not fetch PDFs (${err.message}).`);
   }
 }
+
+/**
+ * Fetch latest PIB News using Tavily API.
+ * Returns the raw results array containing titles, snippets, and URLs.
+ */
+export async function fetchPIBNews() {
+  if (!TAVILY_API_KEY || TAVILY_API_KEY === 'your_tavily_api_key_here') {
+    throw new Error('Tavily API key is not configured. Please add VITE_TAVILY_API_KEY to your .env file.');
+  }
+
+  try {
+    const response = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        api_key: TAVILY_API_KEY,
+        query: 'Press Information Bureau India latest news english site:pib.gov.in',
+        search_depth: 'advanced',
+        include_answer: false,
+        include_images: true,
+        max_results: 15, // Get more results to show in a grid
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Tavily API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.results || [];
+  } catch (err) {
+    console.error('Web Search Error:', err);
+    throw new Error(`Could not fetch PIB News (${err.message}).`);
+  }
+}

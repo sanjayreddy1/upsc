@@ -1,0 +1,106 @@
+.pib-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.pib-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.pib-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.pib-desc {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.pib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.pib-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px;
+  text-decoration: none;
+  color: var(--text);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(var(--primary-rgb), 0.1);
+  height: 100%;
+}
+
+.pib-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  border-color: rgba(var(--primary-rgb), 0.4);
+}
+
+.pib-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.pib-snippet {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 20px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pib-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pib-source {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.pib-read-more {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary);
+  transition: color 0.2s;
+}
+
+.pib-card:hover .pib-read-more {
+  color: var(--secondary);
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}

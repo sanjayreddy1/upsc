@@ -68,7 +68,7 @@ export default function DailyTest() {
     );
   }
 
-  if (completedToday && !submitted && questions.length === 0) {
+  if (completedToday && !submitted) {
     return (
       <div className="daily-test-container flex-center">
         <div className="glass-card text-center" style={{ padding: '40px', maxWidth: '500px' }}>

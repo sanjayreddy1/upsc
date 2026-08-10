@@ -14,6 +14,7 @@ import Chatbot from './components/Chatbot/Chatbot';
 import UploadSyllabus from './components/Syllabus/UploadSyllabus';
 import DailyTest from './components/DailyTest/DailyTest';
 import PYQModule from './components/PYQ/PYQModule';
+import PIBNews from './components/PIBNews/PIBNews';
 import { useNotification } from './hooks/useNotification';
 import { initNotificationEngine } from './services/notificationEngine';
 import './App.css';
@@ -30,6 +31,7 @@ const PAGE_TITLES = {
   '/ocr': { title: 'OCR Scanner', subtitle: 'Scan & Analyze Documents' },
   '/syllabus': { title: 'Custom Syllabus', subtitle: 'Upload & Generate Custom Questions' },
   '/pyq': { title: 'PYQ Archive', subtitle: 'Live Web PYQ Search' },
+  '/pib-news': { title: 'PIB News', subtitle: 'Latest Press Information Bureau Updates' },
 };
 
 function AppContent() {
@@ -66,6 +68,7 @@ function AppContent() {
             <Route path="/ocr" element={<OCRScanner />} />
             <Route path="/syllabus" element={<UploadSyllabus />} />
             <Route path="/pyq" element={<PYQModule />} />
+            <Route path="/pib-news" element={<PIBNews />} />
           </Routes>
         </div>
       </main>

@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { path: '/sociology', label: 'Sociology', icon: '📚', description: 'Weekly Quiz' },
   { path: '/flashcards', label: 'Flashcards', icon: '🃏', description: 'Global Revision' },
   { path: '/current-affairs', label: 'Current Affairs', icon: '📰', description: 'MCQ Practice' },
+  { path: '/pib-news', label: 'PIB News', icon: '🇮🇳', description: 'Latest Updates' },
   { path: '/csat', label: 'CSAT', icon: '🧮', description: 'RC, LR, QA' },
   { path: '/prelims', label: 'Prelims Bits', icon: '🎯', description: 'Subject MCQs' },
   { path: '/pyq', label: 'PYQ Archive', icon: '🏛️', description: 'Live Web PYQ Search' },
