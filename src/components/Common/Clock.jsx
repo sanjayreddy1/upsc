@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import SplitFlapText from './SplitFlapText';
 
 const QUOTES = [
-  "kalam pon pondradhu ⌛",
-  "time waste pannadha erua 🐃",
-  "mooditu padi panni 🐖🐷"
+  "Time is the wisest counselor of all. - Pericles ⏳",
+  "The two most powerful warriors are patience and time. - Leo Tolstoy 🕰️",
+  "Time is a created thing. To say 'I don't have time,' is like saying, 'I don't want to.' - Lao Tzu ⏱️"
 ];
 
 export default function Clock() {
