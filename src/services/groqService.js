@@ -211,18 +211,41 @@ export async function generateCSATQuestions(type, count = 5) {
   const messages = [
     {
       role: 'system',
-      content: `You are a UPSC CSAT (Paper II) question setter. Generate VERY HARD questions. Include tricky distractors and multi-step reasoning. Always return valid JSON.`,
+      content: `You are a UPSC CSAT (Paper II) question setter. Generate VERY HARD questions. Include tricky distractors and multi-step reasoning. Always return a valid JSON object.`,
     },
     {
       role: 'user',
       content: `${specificPrompt}
 
-Return JSON: { "passage": "text (only for RC)", "questions": [{ "question": "text", "options": { "A": "opt1", "B": "opt2", "C": "opt3", "D": "opt4" }, "correct": "B", "explanation": "step-by-step solution", "type": "${type}", "topic": "${type}", "subtopic": "${subtopic}", "previousYear": "YYYY if asked before, otherwise null" }] }`,
+CRITICAL FORMAT REQUIREMENT:
+You MUST return exactly this JSON object structure (no extra text, no markdown):
+{
+  "passage": "text (only for RC, otherwise null)",
+  "questions": [
+    {
+      "question": "text",
+      "options": { "A": "opt1", "B": "opt2", "C": "opt3", "D": "opt4" },
+      "correct": "B",
+      "explanation": "step-by-step solution",
+      "type": "${type}",
+      "topic": "${type}",
+      "subtopic": "${subtopic}",
+      "previousYear": "YYYY if asked before, otherwise null"
+    }
+  ]
+}`,
     },
   ];
 
-  const result = await callGroqAPI(messages, 0.7, 2048);
-  return parseJSON(result);
+  const result = await callGroqAPI(messages, 0.7, 8192);
+  const parsed = parseJSON(result);
+  
+  // If the AI somehow returns just the array of questions, wrap it correctly
+  if (Array.isArray(parsed)) {
+    return { passage: null, questions: parsed };
+  }
+  
+  return parsed || { passage: null, questions: [] };
 }
 
 // ── Current Affairs MCQ Generation ──────────────────────────────────────

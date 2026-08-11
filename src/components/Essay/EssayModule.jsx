@@ -22,6 +22,15 @@ export default function EssayModule() {
   const [currentEval, setCurrentEval] = useState(null);
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrProgress, setOcrProgress] = useState(0);
+  const [history, setHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('essay_eval_history') || '[]');
+      setHistory(saved);
+    } catch (e) {}
+  }, []);
 
   const { loading, error, getEssayQuestions } = useQuestionGenerator();
   const { evaluating, evaluate } = useEvaluation();
@@ -54,8 +63,20 @@ export default function EssayModule() {
 
     const result = await evaluate(question.question, answer, question.keyPoints || [], 'essay');
     if (result) {
-      setCurrentEval(result);
+      const evalWithMeta = {
+        ...result,
+        questionText: question.question,
+        userAnswer: answer,
+        paper,
+        dateStr: new Date().toLocaleString()
+      };
+      setCurrentEval(evalWithMeta);
       setShowEval(true);
+      
+      const newHistory = [evalWithMeta, ...history];
+      setHistory(newHistory);
+      localStorage.setItem('essay_eval_history', JSON.stringify(newHistory));
+
       sendNotification('Evaluation Complete!', {
         body: `Your essay for ${paper} has been evaluated.`,
       });
@@ -109,10 +130,41 @@ export default function EssayModule() {
           <h1>✍️ Mains Essay Practice</h1>
           <p className="essay-desc">4 questions daily — one per GS paper. Write, submit, and get AI-powered evaluation.</p>
         </div>
-        <Timer duration={900} label="Session Timer" />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
+          <Timer duration={900} label="Session Timer" />
+          <button className="btn btn-secondary btn-sm" onClick={() => setShowHistory(!showHistory)}>
+            {showHistory ? '⬅️ Back to Practice' : '📜 View History'}
+          </button>
+        </div>
       </div>
 
-      {/* Paper Tabs */}
+      {showHistory ? (
+        <div className="essay-history animate-fade-in" style={{ marginTop: '20px' }}>
+          <h2 style={{ marginBottom: '16px' }}>📜 Evaluation History</h2>
+          {history.length === 0 ? (
+            <div className="glass-card" style={{ padding: '32px', textAlign: 'center' }}>
+              <p>No evaluations found in history.</p>
+            </div>
+          ) : (
+            <div className="history-grid" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {history.map((h, i) => (
+                <div key={i} className="glass-card" style={{ padding: '20px', cursor: 'pointer', transition: 'all 0.2s ease' }} onClick={() => { setCurrentEval(h); setShowEval(true); }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
+                    <span className="badge badge-primary">{h.paper}</span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{h.dateStr}</span>
+                  </div>
+                  <p style={{ fontWeight: 600, fontSize: '1.05rem', margin: '8px 0', color: 'var(--text-primary)' }}>{h.questionText}</p>
+                  <p style={{ color: 'var(--accent-emerald)', fontWeight: 500 }}>
+                    Score: {h.finalScore || Math.round((h.percentage / 100) * 20)} / 20
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Paper Tabs */}
       <div className="paper-tabs">
         {PAPERS.map((p) => (
           <button
@@ -218,12 +270,14 @@ export default function EssayModule() {
         </div>
       )}
 
-      {!loading && currentQuestions.length === 0 && !error && (
-        <div className="loading-container">
-          <button className="btn btn-primary btn-lg" onClick={() => loadQuestions(activePaper)}>
-            🔄 Generate {activePaper} Questions
-          </button>
-        </div>
+          {!loading && currentQuestions.length === 0 && !error && (
+            <div className="loading-container">
+              <button className="btn btn-primary btn-lg" onClick={() => loadQuestions(activePaper)}>
+                🔄 Generate {activePaper} Questions
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Evaluation Overlay */}

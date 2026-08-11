@@ -384,6 +384,73 @@ export const PRELIMS_SYLLABUS = {
       'Indian philosophy — schools of thought, Shad Darshanas',
     ],
   },
+  Polity: {
+    name: 'Polity',
+    subcategories: {
+      ConstitutionalFramework: {
+        name: 'Constitutional Framework',
+        subtopics: [
+          'Historical Background',
+          'Making of the Constitution',
+          'Salient Features of the Constitution',
+          'Preamble of the Constitution',
+          'Union and its Territory',
+          'Citizenship',
+          'Fundamental Rights',
+          'Directive Principles of State Policy',
+          'Fundamental Duties',
+          'Amendment of the Constitution',
+          'Basic Structure of the Constitution',
+        ],
+      },
+      SystemOfGovernment: {
+        name: 'System of Government',
+        subtopics: [
+          'Parliamentary System',
+          'Federal System',
+          'Centre-State Relations',
+          'Inter-State Relations',
+          'Emergency Provisions',
+        ],
+      },
+      CentralAndStateGovernment: {
+        name: 'Central and State Government',
+        subtopics: [
+          'President and Governor',
+          'Vice-President',
+          'Prime Minister and Chief Minister',
+          'Central and State Council of Ministers',
+          'Cabinet Committees',
+          'Parliament and State Legislature',
+          'Supreme Court and High Court',
+        ],
+      },
+      LocalGovernmentAndUnionTerritories: {
+        name: 'Local Government & UTs',
+        subtopics: [
+          'Panchayati Raj',
+          'Municipalities',
+          'Union Territories',
+          'Scheduled and Tribal Areas',
+        ],
+      },
+      ConstitutionalAndNonConstitutionalBodies: {
+        name: 'Constitutional & Non-Constitutional Bodies',
+        subtopics: [
+          'Election Commission',
+          'UPSC and SPSC',
+          'Finance Commission',
+          'CAG',
+          'Attorney General and Advocate General',
+          'NITI Aayog',
+          'National Human Rights Commission',
+          'Central Information Commission',
+          'Central Vigilance Commission',
+          'Lokpal and Lokayuktas',
+        ],
+      },
+    },
+  },
 };
 
 export const CSAT_SYLLABUS = {

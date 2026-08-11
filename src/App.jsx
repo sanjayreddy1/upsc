@@ -8,7 +8,9 @@ import SociologyFlashcards from './components/Optional/SociologyFlashcards';
 import CurrentAffairs from './components/CurrentAffairs/CurrentAffairs';
 import CSATModule from './components/CSAT/CSATModule';
 import PrelimsModule from './components/Prelims/PrelimsModule';
+import PolityModule from './components/Polity/PolityModule';
 import FlashcardsModule from './components/Flashcards/FlashcardsModule';
+import SavedFlashcards from './components/Flashcards/SavedFlashcards';
 import OCRScanner from './components/OCR/OCRScanner';
 import Chatbot from './components/Chatbot/Chatbot';
 import UploadSyllabus from './components/Syllabus/UploadSyllabus';
@@ -27,7 +29,9 @@ const PAGE_TITLES = {
   '/current-affairs': { title: 'Current Affairs', subtitle: 'MCQ Practice' },
   '/csat': { title: 'CSAT Practice', subtitle: 'RC · LR · QA' },
   '/prelims': { title: 'Prelims Bits', subtitle: 'Subject-wise MCQs' },
+  '/polity': { title: 'Polity MCQs', subtitle: 'Constitutional Framework & Governance' },
   '/flashcards': { title: 'Global Flashcards', subtitle: 'Quick Revision' },
+  '/saved-flashcards': { title: 'Saved Flashcards', subtitle: 'Your Collection' },
   '/ocr': { title: 'OCR Scanner', subtitle: 'Scan & Analyze Documents' },
   '/syllabus': { title: 'Custom Syllabus', subtitle: 'Upload & Generate Custom Questions' },
   '/pyq': { title: 'PYQ Archive', subtitle: 'Live Web PYQ Search' },
@@ -64,7 +68,9 @@ function AppContent() {
             <Route path="/current-affairs" element={<CurrentAffairs />} />
             <Route path="/csat" element={<CSATModule />} />
             <Route path="/prelims" element={<PrelimsModule />} />
+            <Route path="/polity" element={<PolityModule />} />
             <Route path="/flashcards" element={<FlashcardsModule />} />
+            <Route path="/saved-flashcards" element={<SavedFlashcards />} />
             <Route path="/ocr" element={<OCRScanner />} />
             <Route path="/syllabus" element={<UploadSyllabus />} />
             <Route path="/pyq" element={<PYQModule />} />

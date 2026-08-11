@@ -1,9 +1,23 @@
 import { useState, useEffect } from 'react';
 import SplitFlapText from './SplitFlapText';
 
+const QUOTES = [
+  "kalam pon pondradhu ⌛",
+  "time waste pannadha erua 🐃",
+  "mooditu padi panni 🐖🐷"
+];
+
 export default function Clock() {
   const [dateStr, setDateStr] = useState('');
   const [timeStr, setTimeStr] = useState('');
+  const [quoteIdx, setQuoteIdx] = useState(0);
+
+  useEffect(() => {
+    const quoteTimer = setInterval(() => {
+      setQuoteIdx((prev) => (prev + 1) % QUOTES.length);
+    }, 3000);
+    return () => clearInterval(quoteTimer);
+  }, []);
 
   useEffect(() => {
     const updateClock = () => {
@@ -16,13 +30,12 @@ export default function Clock() {
       }).toUpperCase();
       setDateStr(date);
 
-      const time = now.toLocaleTimeString('en-IN', {
-        timeZone: 'Asia/Kolkata',
-        hour12: false,
+      const time = now.toLocaleTimeString('en-US', {
+        hour12: true,
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit'
-      }) + ' IST';
+      });
       setTimeStr(time);
     };
 
@@ -54,6 +67,9 @@ export default function Clock() {
         flipDuration={0.12}
         flipsPerChar={0}
       />
+      <p style={{ marginTop: '16px', fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-secondary)', textAlign: 'center', minHeight: '30px', transition: 'all 0.3s ease', textTransform: 'capitalize' }}>
+        {QUOTES[quoteIdx]}
+      </p>
     </div>
   );
 }

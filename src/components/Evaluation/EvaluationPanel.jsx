@@ -1,4 +1,5 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import html2pdf from 'html2pdf.js';
 import ProgressRing from '../Common/ProgressRing';
 import CountUp from '../Common/CountUp';
@@ -6,6 +7,29 @@ import './EvaluationPanel.css';
 
 export default function EvaluationPanel({ evaluation, onClose }) {
   const evalRef = useRef(null);
+  const overlayRef = useRef(null);
+
+  useEffect(() => {
+    // Lock body scroll
+    document.body.style.overflow = 'hidden';
+    
+    // Scroll window to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const timer = setTimeout(() => {
+      if (overlayRef.current) {
+        overlayRef.current.scrollTop = 0;
+      }
+      if (evalRef.current) {
+        evalRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 150);
+
+    return () => {
+      document.body.style.overflow = 'auto';
+      clearTimeout(timer);
+    };
+  }, []);
 
   if (!evaluation) return null;
 
@@ -55,8 +79,8 @@ export default function EvaluationPanel({ evaluation, onClose }) {
     }
   };
 
-  return (
-    <div className="evaluation-overlay animate-fade-in">
+  const content = (
+    <div className="evaluation-overlay animate-fade-in" ref={overlayRef}>
       {/* Action Bar floating at the top of the overlay */}
       <div className="eval-action-bar">
         <button className="btn btn-secondary" onClick={handleDownloadPDF}>
@@ -95,8 +119,12 @@ export default function EvaluationPanel({ evaluation, onClose }) {
                   <span className="score-value success-text">{evaluation.correct}</span>
                 </div>
                 <div className="score-item">
-                  <span className="score-label">Incorrect Answers (-0.66)</span>
+                  <span className="score-label">Incorrect Answers</span>
                   <span className="score-value danger-text">{evaluation.incorrect}</span>
+                </div>
+                <div className="score-item">
+                  <span className="score-label">Negative Marks Applied</span>
+                  <span className="score-value danger-text">-{Math.abs(evaluation.incorrect * 0.66).toFixed(2)}</span>
                 </div>
                 <div className="score-item">
                   <span className="score-label">Unanswered</span>
@@ -192,6 +220,15 @@ export default function EvaluationPanel({ evaluation, onClose }) {
                   )}
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {!isMCQ && evaluation.userAnswer && (
+          <div className="eval-section">
+            <h3>📝 Your Original Answer</h3>
+            <div className="model-answer" style={{ whiteSpace: 'pre-wrap', marginTop: '12px' }}>
+              {evaluation.userAnswer}
             </div>
           </div>
         )}
@@ -307,6 +344,8 @@ export default function EvaluationPanel({ evaluation, onClose }) {
       </div>
     </div>
   );
+
+  return createPortal(content, document.body);
 }
 
 function formatLabel(key) {

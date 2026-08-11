@@ -1,0 +1,49 @@
+.polity-module {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--spacing-xl) 0;
+}
+
+.polity-header {
+  text-align: center;
+  margin-bottom: var(--spacing-2xl);
+}
+
+.polity-header h1 {
+  font-size: 2.5rem;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+  background: linear-gradient(135deg, #1a202c, #2d3748);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.polity-desc {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.polity-subcats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-2xl);
+  justify-content: center;
+}
+
+.polity-subcats .btn {
+  border-radius: 20px;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+}
+
+.polity-subcats .btn:hover {
+  transform: translateY(-2px);
+}
+
+.polity-questions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}

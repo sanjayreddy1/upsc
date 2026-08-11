@@ -3,6 +3,7 @@ import { useQuestionGenerator } from '../../hooks/useQuestionGenerator';
 import { useEvaluation } from '../../hooks/useEvaluation';
 import { useStreak } from '../../hooks/useStreak';
 import MCQCard from '../Common/MCQCard';
+import EvaluationPanel from '../Evaluation/EvaluationPanel';
 import './DailyTest.css';
 
 export default function DailyTest() {
@@ -96,7 +97,7 @@ export default function DailyTest() {
         </div>
       )}
 
-      {questions.length > 0 && !submitted && (
+      {questions.length > 0 && (
         <div className="daily-questions">
           {questions.map((q, idx) => (
             <MCQCard
@@ -105,63 +106,37 @@ export default function DailyTest() {
               question={q}
               userAnswer={userAnswers[idx]}
               onAnswer={handleAnswer}
-              showResult={false}
+              showResult={submitted}
             />
           ))}
           
-          <div className="submit-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', marginTop: '24px' }}>
-            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.1rem', fontWeight: '500' }}>
-              Attempted: {Object.keys(userAnswers).length} / 10
-            </p>
-            <button 
-              className="btn btn-primary btn-lg" 
-              onClick={handleSubmit}
-              disabled={Object.keys(userAnswers).length < 10}
-              style={{ width: '100%', maxWidth: '350px', fontSize: '1.2rem', padding: '16px', borderRadius: '12px', boxShadow: '0 8px 16px rgba(var(--primary-rgb), 0.2)' }}
-            >
-              ✅ Evaluate & Save Streak
-            </button>
-          </div>
+          {!submitted && (
+            <div className="submit-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', marginTop: '24px' }}>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1.1rem', fontWeight: '500' }}>
+                Attempted: {Object.keys(userAnswers).length} / 10
+              </p>
+              <button 
+                className="btn btn-primary btn-lg" 
+                onClick={handleSubmit}
+                disabled={Object.keys(userAnswers).length < 10}
+                style={{ width: '100%', maxWidth: '350px', fontSize: '1.2rem', padding: '16px', borderRadius: '12px', boxShadow: '0 8px 16px rgba(var(--primary-rgb), 0.2)' }}
+              >
+                ✅ Evaluate & Save Streak
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {submitted && mcqResult && (
-        <div className="daily-results animate-slide-up" ref={resultRef}>
-          <div className="glass-card result-summary">
-            <h2>Test Evaluation</h2>
-            <div className="result-stats">
-              <div className="stat-box">
-                <span className="stat-value text-emerald">{mcqResult.correct}</span>
-                <span className="stat-label">Correct</span>
-              </div>
-              <div className="stat-box">
-                <span className="stat-value text-red">{mcqResult.incorrect}</span>
-                <span className="stat-label">Incorrect</span>
-              </div>
-              <div className="stat-box">
-                <span className="stat-value text-yellow">{mcqResult.unanswered}</span>
-                <span className="stat-label">Skipped</span>
-              </div>
-              <div className="stat-box">
-                <span className="stat-value">{mcqResult.rawScore.toFixed(2)}</span>
-                <span className="stat-label">Total Score</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="questions-review">
-            <h3>Detailed Review</h3>
-            {questions.map((q, idx) => (
-              <MCQCard
-                key={idx}
-                index={idx}
-                question={q}
-                userAnswer={userAnswers[idx]}
-                showResult={true}
-              />
-            ))}
-          </div>
-        </div>
+        <EvaluationPanel 
+          evaluation={{...mcqResult, type: 'mcq'}} 
+          onClose={() => {
+            setMcqResult(null);
+            setUserAnswers({});
+            setSubmitted(false);
+          }} 
+        />
       )}
     </div>
   );
