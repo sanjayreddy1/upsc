@@ -1,5 +1,5 @@
 const express = require('express');
-const { poolPromise } = require('../config/db');
+const { pool } = require('../config/db');
 const { auth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -9,18 +9,11 @@ const router = express.Router();
 router.post('/evaluations', auth, async (req, res) => {
   try {
     const { test_type, score, total, details } = req.body;
-    const pool = await poolPromise;
 
-    await pool.request()
-      .input('user_id', req.user.id)
-      .input('test_type', test_type)
-      .input('score', score)
-      .input('total', total)
-      .input('details', JSON.stringify(details || {}))
-      .query(`
-        INSERT INTO EvaluationMetrics (user_id, test_type, score, total, details)
-        VALUES (@user_id, @test_type, @score, @total, @details)
-      `);
+    await pool.query(`
+      INSERT INTO EvaluationMetrics (user_id, test_type, score, total, details)
+      VALUES ($1, $2, $3, $4, $5)
+    `, [req.user.id, test_type, score, total, JSON.stringify(details || {})]);
 
     res.json({ message: 'Evaluation saved successfully' });
   } catch (err) {
@@ -33,16 +26,13 @@ router.post('/evaluations', auth, async (req, res) => {
 // @desc    Get all evaluation metrics for the logged-in user
 router.get('/evaluations', auth, async (req, res) => {
   try {
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input('user_id', req.user.id)
-      .query(`
-        SELECT * FROM EvaluationMetrics 
-        WHERE user_id = @user_id 
-        ORDER BY created_at DESC
-      `);
+    const result = await pool.query(`
+      SELECT * FROM EvaluationMetrics 
+      WHERE user_id = $1 
+      ORDER BY created_at DESC
+    `, [req.user.id]);
 
-    res.json(result.recordset);
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error fetching evaluations' });
@@ -53,23 +43,15 @@ router.get('/evaluations', auth, async (req, res) => {
 // @desc    Get user streak data
 router.get('/streak', auth, async (req, res) => {
   try {
-    const pool = await poolPromise;
-    let result = await pool.request()
-      .input('user_id', req.user.id)
-      .query('SELECT * FROM Streaks WHERE user_id = @user_id');
+    let result = await pool.query('SELECT * FROM Streaks WHERE user_id = $1', [req.user.id]);
 
-    if (result.recordset.length === 0) {
+    if (result.rows.length === 0) {
       // Initialize streak if none exists
-      await pool.request()
-        .input('user_id', req.user.id)
-        .query('INSERT INTO Streaks (user_id) VALUES (@user_id)');
-      
-      result = await pool.request()
-        .input('user_id', req.user.id)
-        .query('SELECT * FROM Streaks WHERE user_id = @user_id');
+      await pool.query('INSERT INTO Streaks (user_id) VALUES ($1)', [req.user.id]);
+      result = await pool.query('SELECT * FROM Streaks WHERE user_id = $1', [req.user.id]);
     }
 
-    res.json(result.recordset[0]);
+    res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error fetching streak' });
@@ -81,22 +63,15 @@ router.get('/streak', auth, async (req, res) => {
 router.put('/streak', auth, async (req, res) => {
   try {
     const { currentStreak, highestStreak, lastTestDate, completedToday } = req.body;
-    const pool = await poolPromise;
 
-    await pool.request()
-      .input('user_id', req.user.id)
-      .input('current_streak', currentStreak)
-      .input('highest_streak', highestStreak)
-      .input('last_test_date', lastTestDate)
-      .input('completed_today', completedToday ? 1 : 0)
-      .query(`
-        UPDATE Streaks 
-        SET current_streak = @current_streak, 
-            highest_streak = @highest_streak, 
-            last_test_date = @last_test_date, 
-            completed_today = @completed_today 
-        WHERE user_id = @user_id
-      `);
+    await pool.query(`
+      UPDATE Streaks 
+      SET current_streak = $1, 
+          highest_streak = $2, 
+          last_test_date = $3, 
+          completed_today = $4 
+      WHERE user_id = $5
+    `, [currentStreak, highestStreak, lastTestDate, completedToday ? true : false, req.user.id]);
 
     res.json({ message: 'Streak updated successfully' });
   } catch (err) {
@@ -109,12 +84,8 @@ router.put('/streak', auth, async (req, res) => {
 // @desc    Get all saved flashcards for user
 router.get('/flashcards', auth, async (req, res) => {
   try {
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input('user_id', req.user.id)
-      .query('SELECT * FROM SavedFlashcards WHERE user_id = @user_id ORDER BY saved_at DESC');
-
-    res.json(result.recordset);
+    const result = await pool.query('SELECT * FROM SavedFlashcards WHERE user_id = $1 ORDER BY saved_at DESC', [req.user.id]);
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error fetching flashcards' });
@@ -126,18 +97,11 @@ router.get('/flashcards', auth, async (req, res) => {
 router.post('/flashcards', auth, async (req, res) => {
   try {
     const { question, answer, topic, subject } = req.body;
-    const pool = await poolPromise;
 
-    await pool.request()
-      .input('user_id', req.user.id)
-      .input('question', question)
-      .input('answer', answer)
-      .input('topic', topic)
-      .input('subject', subject)
-      .query(`
-        INSERT INTO SavedFlashcards (user_id, question, answer, topic, subject)
-        VALUES (@user_id, @question, @answer, @topic, @subject)
-      `);
+    await pool.query(`
+      INSERT INTO SavedFlashcards (user_id, question, answer, topic, subject)
+      VALUES ($1, $2, $3, $4, $5)
+    `, [req.user.id, question, answer, topic, subject]);
 
     res.json({ message: 'Flashcard saved successfully' });
   } catch (err) {
@@ -151,12 +115,8 @@ router.post('/flashcards', auth, async (req, res) => {
 router.delete('/flashcards', auth, async (req, res) => {
   try {
     const { question } = req.body;
-    const pool = await poolPromise;
 
-    await pool.request()
-      .input('user_id', req.user.id)
-      .input('question', question)
-      .query('DELETE FROM SavedFlashcards WHERE user_id = @user_id AND question = @question');
+    await pool.query('DELETE FROM SavedFlashcards WHERE user_id = $1 AND question = $2', [req.user.id, question]);
 
     res.json({ message: 'Flashcard removed successfully' });
   } catch (err) {

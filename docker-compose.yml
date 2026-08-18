@@ -6,26 +6,24 @@ services:
     ports:
       - "5000:5000"
     depends_on:
-      - mssql-db
+      - postgres-db
     environment:
-      - DB_USER=sa
-      - DB_PASSWORD=UpscAppPassword123!
-      - DB_SERVER=mssql-db
-      - DB_NAME=upsc_db
+      - DATABASE_URL=postgres://upsc_user:UpscAppPassword123!@postgres-db:5432/upsc_db
       - JWT_SECRET=super_secret_jwt_key_123
       - PORT=5000
     restart: unless-stopped
 
-  mssql-db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+  postgres-db:
+    image: postgres:15-alpine
     ports:
-      - "1433:1433"
+      - "5432:5432"
     environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=UpscAppPassword123!
+      - POSTGRES_USER=upsc_user
+      - POSTGRES_PASSWORD=UpscAppPassword123!
+      - POSTGRES_DB=upsc_db
     volumes:
-      - mssql-data:/var/opt/mssql
+      - pg-data:/var/lib/postgresql/data
     restart: unless-stopped
 
 volumes:
-  mssql-data:
+  pg-data:

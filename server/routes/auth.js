@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { poolPromise } = require('../config/db');
+const { pool } = require('../config/db');
 
 const router = express.Router();
 
@@ -31,14 +31,10 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    const pool = await poolPromise;
-    
     // Check if user exists
-    const userCheck = await pool.request()
-      .input('email', email)
-      .query('SELECT id FROM Users WHERE email = @email');
+    const userCheck = await pool.query('SELECT id FROM Users WHERE email = $1', [email]);
 
-    if (userCheck.recordset.length > 0) {
+    if (userCheck.rows.length > 0) {
       return res.status(400).json({ message: 'An account with this email already exists.' });
     }
 
@@ -47,18 +43,13 @@ router.post('/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     // Default role 'user'
-    const insertResult = await pool.request()
-      .input('name', name)
-      .input('email', email)
-      .input('password_hash', passwordHash)
-      .input('role', 'user')
-      .query(`
-        INSERT INTO Users (name, email, password_hash, role) 
-        OUTPUT INSERTED.id, INSERTED.name, INSERTED.email, INSERTED.role
-        VALUES (@name, @email, @password_hash, @role)
-      `);
+    const insertResult = await pool.query(`
+      INSERT INTO Users (name, email, password_hash, role) 
+      VALUES ($1, $2, $3, $4)
+      RETURNING id, name, email, role
+    `, [name, email, passwordHash, 'user']);
 
-    const user = insertResult.recordset[0];
+    const user = insertResult.rows[0];
 
     const token = jwt.sign(
       { id: user.id, role: user.role }, 
@@ -86,16 +77,13 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Not all fields have been entered.' });
     }
 
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input('email', email)
-      .query('SELECT * FROM Users WHERE email = @email');
+    const result = await pool.query('SELECT * FROM Users WHERE email = $1', [email]);
 
-    if (result.recordset.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(400).json({ message: 'No account with this email has been registered.' });
     }
 
-    const user = result.recordset[0];
+    const user = result.rows[0];
     const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!isMatch) {

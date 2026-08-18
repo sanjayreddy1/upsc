@@ -47,9 +47,21 @@ const PAGE_TITLES = {
   '/admin': { title: 'Admin Dashboard', subtitle: 'Manage users and metrics' },
 };
 
+import { Navigate } from 'react-router-dom';
+
+function PrivateRoute({ children }) {
+  const { user, loading } = useAuth();
+  
+  if (loading) return <div className="flex-center" style={{ height: '100vh' }}>Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
+  
+  return children;
+}
+
 function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
   const pageInfo = PAGE_TITLES[location.pathname] || PAGE_TITLES['/'];
 
   // Initialize notifications on app load
@@ -59,39 +71,45 @@ function AppContent() {
     initNotificationEngine();
   }, []);
 
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+
   return (
     <div className="app-layout">
-      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+      {!isAuthPage && <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />}
       <main className="app-main">
-        <Header
-          title={pageInfo.title}
-          subtitle={pageInfo.subtitle}
-          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-        />
+        {!isAuthPage && (
+          <Header
+            title={pageInfo.title}
+            subtitle={pageInfo.subtitle}
+            onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+          />
+        )}
         <div className="app-content">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/daily-test" element={<DailyTest />} />
-            <Route path="/essay" element={<EssayModule />} />
-            <Route path="/sociology" element={<SociologyFlashcards />} />
-            <Route path="/current-affairs" element={<CurrentAffairs />} />
-            <Route path="/csat" element={<CSATModule />} />
-            <Route path="/prelims" element={<PrelimsModule />} />
-            <Route path="/polity" element={<PolityModule />} />
-            <Route path="/flashcards" element={<FlashcardsModule />} />
-            <Route path="/saved-flashcards" element={<SavedFlashcards />} />
-            <Route path="/ocr" element={<OCRScanner />} />
-            <Route path="/syllabus" element={<UploadSyllabus />} />
-            <Route path="/pyq" element={<PYQModule />} />
-            <Route path="/pib-news" element={<PIBNews />} />
-            <Route path="/settings" element={<Settings />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/admin" element={<AdminDashboard />} />
+            
+            {/* Protected Routes */}
+            <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+            <Route path="/daily-test" element={<PrivateRoute><DailyTest /></PrivateRoute>} />
+            <Route path="/essay" element={<PrivateRoute><EssayModule /></PrivateRoute>} />
+            <Route path="/sociology" element={<PrivateRoute><SociologyFlashcards /></PrivateRoute>} />
+            <Route path="/current-affairs" element={<PrivateRoute><CurrentAffairs /></PrivateRoute>} />
+            <Route path="/csat" element={<PrivateRoute><CSATModule /></PrivateRoute>} />
+            <Route path="/prelims" element={<PrivateRoute><PrelimsModule /></PrivateRoute>} />
+            <Route path="/polity" element={<PrivateRoute><PolityModule /></PrivateRoute>} />
+            <Route path="/flashcards" element={<PrivateRoute><FlashcardsModule /></PrivateRoute>} />
+            <Route path="/saved-flashcards" element={<PrivateRoute><SavedFlashcards /></PrivateRoute>} />
+            <Route path="/ocr" element={<PrivateRoute><OCRScanner /></PrivateRoute>} />
+            <Route path="/syllabus" element={<PrivateRoute><UploadSyllabus /></PrivateRoute>} />
+            <Route path="/pyq" element={<PrivateRoute><PYQModule /></PrivateRoute>} />
+            <Route path="/pib-news" element={<PrivateRoute><PIBNews /></PrivateRoute>} />
+            <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+            <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
           </Routes>
         </div>
       </main>
-      <Chatbot />
+      {!isAuthPage && <Chatbot />}
     </div>
   );
 }

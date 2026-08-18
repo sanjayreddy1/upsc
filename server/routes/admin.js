@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { poolPromise } = require('../config/db');
+const { pool } = require('../config/db');
 const { auth, isAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -9,8 +9,7 @@ const router = express.Router();
 // @desc    Get all users and their basic evaluation metrics
 router.get('/users', auth, isAdmin, async (req, res) => {
   try {
-    const pool = await poolPromise;
-    const result = await pool.request().query(`
+    const result = await pool.query(`
       SELECT 
         u.id, 
         u.name, 
@@ -24,7 +23,7 @@ router.get('/users', auth, isAdmin, async (req, res) => {
       GROUP BY u.id, u.name, u.email, u.role, u.created_at
     `);
 
-    res.json(result.recordset);
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error fetching users' });
@@ -35,16 +34,13 @@ router.get('/users', auth, isAdmin, async (req, res) => {
 // @desc    Get detailed evaluation metrics for a specific user
 router.get('/evaluations/:userId', auth, isAdmin, async (req, res) => {
   try {
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input('user_id', req.params.userId)
-      .query(`
+    const result = await pool.query(`
         SELECT * FROM EvaluationMetrics 
-        WHERE user_id = @user_id 
+        WHERE user_id = $1 
         ORDER BY created_at DESC
-      `);
+      `, [req.params.userId]);
 
-    res.json(result.recordset);
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error fetching evaluations' });
@@ -64,11 +60,10 @@ router.put('/change-password', auth, isAdmin, async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(newPassword, salt);
 
-    const pool = await poolPromise;
-    await pool.request()
-      .input('user_id', userId)
-      .input('password_hash', passwordHash)
-      .query('UPDATE Users SET password_hash = @password_hash WHERE id = @user_id');
+    await pool.query(
+      'UPDATE Users SET password_hash = $1 WHERE id = $2', 
+      [passwordHash, userId]
+    );
 
     res.json({ message: 'Password updated successfully' });
   } catch (err) {
