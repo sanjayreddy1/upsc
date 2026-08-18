@@ -176,3 +176,19 @@ export function useEvaluation() {
     clearEvaluation: () => setEvaluation(null),
   };
 }
+
+export function getEvaluationHistory(type) {
+  try {
+    return JSON.parse(localStorage.getItem(`eval_history_${type}`) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+export function getMCQHistory() {
+  try {
+    return JSON.parse(localStorage.getItem('mcq_history') || '[]');
+  } catch {
+    return [];
+  }
+}
