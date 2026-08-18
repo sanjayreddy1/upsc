@@ -21,7 +21,9 @@ const poolPromise = new sql.ConnectionPool(dbConfig)
   })
   .catch(err => {
     console.error('Database Connection Failed! Bad Config: ', err);
-    process.exit(1);
+    console.error('Please ensure DB_SERVER, DB_USER, DB_PASSWORD, etc. are set in Render environment variables.');
+    // We remove process.exit(1) so the frontend can still be served, 
+    // even though API calls will fail until the DB is configured.
   });
 
 module.exports = {
