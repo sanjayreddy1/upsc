@@ -9,12 +9,14 @@ window.fetch = async (...args) => {
   try {
     const response = await originalFetch(...args);
     if (!response.ok) {
-      try {
-        const clone = response.clone();
-        const errorText = await clone.text();
-        showErrorToast(`API Error (${response.status}): ${errorText.substring(0, 200)}`);
-      } catch (e) {
-        showErrorToast(`API Error (${response.status}): ${response.statusText}`);
+      if (response.status === 400 || response.status === 403) {
+        try {
+          const clone = response.clone();
+          const errorText = await clone.text();
+          showErrorToast(`API Error (${response.status}): ${errorText.substring(0, 200)}`);
+        } catch (e) {
+          showErrorToast(`API Error (${response.status}): ${response.statusText}`);
+        }
       }
     }
     return response;
