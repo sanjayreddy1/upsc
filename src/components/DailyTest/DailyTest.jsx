@@ -11,35 +11,52 @@ export default function DailyTest() {
   const [userAnswers, setUserAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [mcqResult, setMcqResult] = useState(null);
+  const [difficulty, setDifficulty] = useState('easy');
   const resultRef = useRef(null);
 
   const { loading, error, getMCQs } = useQuestionGenerator();
   const { evaluateMCQ } = useEvaluation();
   const { markDailyTestComplete, completedToday } = useStreak();
 
-  const generateDailyQuestions = React.useCallback(async () => {
-    // Generate 10 mixed questions (e.g. History & Polity & Current Affairs)
-    // For speed, just fetch 10 random 'hard' questions from a broad subject like "General Studies"
-    const q = await getMCQs('General Studies', 'Mixed Mock Test (History, Polity, Economy, Geo)', 'hard', 10);
+  const generateDailyQuestions = React.useCallback(async (selectedDiff) => {
+    setUserAnswers({});
+    const diffToUse = selectedDiff || difficulty;
+    const q = await getMCQs('General Studies', 'Mixed Mock Test (History, Polity, Economy, Geo)', diffToUse, 10);
     if (q && q.length > 0) {
       setQuestions(q);
       localStorage.setItem('daily_test_questions', JSON.stringify(q));
       localStorage.setItem('daily_test_date', new Date().toLocaleDateString());
+      localStorage.setItem('daily_test_difficulty', diffToUse);
     }
-  }, [getMCQs]);
+  }, [getMCQs, difficulty]);
 
   useEffect(() => {
     // Check if we already have today's questions cached
     const cached = localStorage.getItem('daily_test_questions');
     const cacheDate = localStorage.getItem('daily_test_date');
+    const cacheDiff = localStorage.getItem('daily_test_difficulty') || 'easy';
     const todayStr = new Date().toLocaleDateString();
 
     if (cached && cacheDate === todayStr) {
-      setQuestions(JSON.parse(cached));
+      const parsed = JSON.parse(cached);
+      // Invalidate cache if it contains the old placeholder errors from the previous model
+      if (parsed.length > 0 && parsed[0].question === 'text') {
+        generateDailyQuestions('easy');
+      } else {
+        setQuestions(parsed);
+        setDifficulty(cacheDiff);
+      }
     } else {
-      generateDailyQuestions();
+      generateDailyQuestions('easy');
     }
-  }, [generateDailyQuestions]);
+  }, []); // Run only once on mount
+
+  const changeDifficulty = (level) => {
+    if (loading) return;
+    if (!window.confirm(`Are you sure you want to change difficulty to ${level}? This will generate a new set of questions and reset your current progress.`)) return;
+    setDifficulty(level);
+    generateDailyQuestions(level);
+  };
 
   useEffect(() => {
     if (submitted && resultRef.current) {
@@ -86,6 +103,29 @@ export default function DailyTest() {
       <div className="daily-header">
         <h1>⏱️ Daily Challenge</h1>
         <p className="daily-desc">Complete exactly 10 questions to maintain your streak.</p>
+        
+        {!submitted && !completedToday && (
+          <div className="difficulty-selector" style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
+            <button 
+              className={`btn btn-sm ${difficulty === 'easy' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => changeDifficulty('easy')}
+            >
+              Easy
+            </button>
+            <button 
+              className={`btn btn-sm ${difficulty === 'hard' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => changeDifficulty('hard')}
+            >
+              Hard
+            </button>
+            <button 
+              className={`btn btn-sm ${difficulty === 'hardcore' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => changeDifficulty('hardcore')}
+            >
+              Hardcore
+            </button>
+          </div>
+        )}
       </div>
 
       {error && (

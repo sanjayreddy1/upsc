@@ -17,6 +17,11 @@ import UploadSyllabus from './components/Syllabus/UploadSyllabus';
 import DailyTest from './components/DailyTest/DailyTest';
 import PYQModule from './components/PYQ/PYQModule';
 import PIBNews from './components/PIBNews/PIBNews';
+import Settings from './components/Settings/Settings';
+import Login from './components/Auth/Login';
+import Register from './components/Auth/Register';
+import AdminDashboard from './components/Admin/AdminDashboard';
+import { AuthProvider, useAuth } from './hooks/useAuth';
 import { useNotification } from './hooks/useNotification';
 import { initNotificationEngine } from './services/notificationEngine';
 import './App.css';
@@ -36,6 +41,10 @@ const PAGE_TITLES = {
   '/syllabus': { title: 'Custom Syllabus', subtitle: 'Upload & Generate Custom Questions' },
   '/pyq': { title: 'PYQ Archive', subtitle: 'Live Web PYQ Search' },
   '/pib-news': { title: 'PIB News', subtitle: 'Latest Press Information Bureau Updates' },
+  '/settings': { title: 'Settings', subtitle: 'App Configuration & Preferences' },
+  '/login': { title: 'Login', subtitle: 'Sign in to your account' },
+  '/register': { title: 'Register', subtitle: 'Create a new account' },
+  '/admin': { title: 'Admin Dashboard', subtitle: 'Manage users and metrics' },
 };
 
 function AppContent() {
@@ -75,6 +84,10 @@ function AppContent() {
             <Route path="/syllabus" element={<UploadSyllabus />} />
             <Route path="/pyq" element={<PYQModule />} />
             <Route path="/pib-news" element={<PIBNews />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </div>
       </main>
@@ -85,9 +98,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
   );
 }
 

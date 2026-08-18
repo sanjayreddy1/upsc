@@ -161,10 +161,14 @@ Return JSON array with objects: { "question": "full question text", "topic": "to
 // ── MCQ Generation (Prelims & Current Affairs) ──────────────────────────
 
 export async function generateMCQs(subject, topic, difficulty = 'hard', count = 5) {
-  const difficultyPrompt =
-    difficulty === 'hard'
-      ? 'The questions should be VERY DIFFICULT — tricky, nuanced, and require deep conceptual understanding. Include plausible distractors that test precise knowledge. An average student should NOT score more than 75%.'
-      : 'Questions should be moderately difficult, testing solid understanding of concepts.';
+  let difficultyPrompt = '';
+  if (difficulty === 'hardcore') {
+    difficultyPrompt = 'The questions should be EXTREMELY DIFFICULT — highly complex, multi-statement based, and require specialized deep knowledge. An average student should NOT score more than 40%.';
+  } else if (difficulty === 'hard') {
+    difficultyPrompt = 'The questions should be VERY DIFFICULT — tricky, nuanced, and require deep conceptual understanding. Include plausible distractors that test precise knowledge. An average student should NOT score more than 75%.';
+  } else {
+    difficultyPrompt = 'Questions should be moderately easy and straightforward, testing basic understanding of concepts without tricky options.';
+  }
 
   const customContext = getCustomSyllabusContext();
 

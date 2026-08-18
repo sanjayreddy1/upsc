@@ -1,32 +1,11 @@
 import { useState, useEffect } from 'react';
 import FlashCard from '../Common/FlashCard';
+import { useFlashcards } from '../../hooks/useFlashcards';
 import './FlashcardsModule.css';
 
 export default function SavedFlashcards() {
-  const [flashcards, setFlashcards] = useState([]);
+  const { flashcards, loading } = useFlashcards();
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  useEffect(() => {
-    const loadSaved = () => {
-      try {
-        const saved = JSON.parse(localStorage.getItem('savedFlashcards') || '[]');
-        setFlashcards(saved);
-      } catch (err) {
-        console.error('Failed to load saved flashcards', err);
-      }
-    };
-    
-    loadSaved();
-    // Listen for custom event from FlashCard component
-    window.addEventListener('flashcardsUpdated', loadSaved);
-    // Listen for cross-tab changes
-    window.addEventListener('storage', loadSaved);
-    
-    return () => {
-      window.removeEventListener('flashcardsUpdated', loadSaved);
-      window.removeEventListener('storage', loadSaved);
-    };
-  }, []);
 
   // Ensure current index is valid after unsaving
   useEffect(() => {

@@ -1,5 +1,6 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useStreak } from '../../hooks/useStreak';
+import { useAuth } from '../../hooks/useAuth';
 import './Sidebar.css';
 
 const NAV_ITEMS = [
@@ -17,11 +18,18 @@ const NAV_ITEMS = [
   { path: '/pyq', label: 'PYQ Archive', icon: '🏛️', description: 'Live Web PYQ Search' },
   { path: '/ocr', label: 'OCR Scanner', icon: '📷', description: 'Scan & Analyze' },
   { path: '/syllabus', label: 'Upload Syllabus', icon: '📑', description: 'Custom AI Prep' },
+  { path: '/settings', label: 'Settings', icon: '⚙️', description: 'App Preferences' },
 ];
 
 export default function Sidebar({ isOpen, onToggle }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { streak, completedToday } = useStreak();
+  const { user, logout } = useAuth();
+
+  const filteredNavItems = user && user.role === 'admin' 
+    ? [...NAV_ITEMS, { path: '/admin', label: 'Admin Panel', icon: '👑', description: 'Manage Users' }]
+    : NAV_ITEMS;
 
   return (
     <>
@@ -39,7 +47,7 @@ export default function Sidebar({ isOpen, onToggle }) {
 
         <nav className="sidebar-nav">
           <ul>
-            {NAV_ITEMS.map((item) => (
+            {filteredNavItems.map((item) => (
               <li key={item.path}>
                 <NavLink
                   to={item.path}
@@ -63,6 +71,31 @@ export default function Sidebar({ isOpen, onToggle }) {
         </nav>
 
         <div className="sidebar-footer">
+          {user ? (
+            <div style={{ padding: '0 15px 15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                Logged in as <strong>{user.name}</strong>
+              </div>
+              <button 
+                className="btn btn-outline btn-sm" 
+                onClick={logout} 
+                style={{ width: '100%', borderColor: 'rgba(255,100,100,0.5)', color: '#ff6b6b' }}
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div style={{ padding: '0 15px 15px' }}>
+              <button 
+                className="btn btn-primary btn-sm" 
+                onClick={() => navigate('/login')} 
+                style={{ width: '100%' }}
+              >
+                Login to Save Progress
+              </button>
+            </div>
+          )}
+
           <div className="sidebar-stats">
             <div className={`stat-item streak-container ${completedToday ? 'completed' : ''}`}>
               <span className="stat-icon">💪</span>
