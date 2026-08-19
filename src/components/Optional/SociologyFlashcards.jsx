@@ -30,7 +30,7 @@ export default function SociologyFlashcards() {
     const answer = quizAnswers[idx];
     if (!answer || !q) return;
 
-    const result = await evaluate(q.question, answer, q.keyPoints || [], 'sociology');
+    const result = await evaluate(q.question, answer, q.keyPoints || [], 'sociology', q.marks || 20);
     if (result) {
       setCurrentEval(result);
       setShowEval(true);

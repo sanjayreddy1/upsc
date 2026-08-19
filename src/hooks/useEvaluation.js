@@ -83,7 +83,7 @@ export function useEvaluation() {
     }
   };
 
-  const evaluate = useCallback(async (question, userAnswer, keyPoints = [], type = 'essay') => {
+  const evaluate = useCallback(async (question, userAnswer, keyPoints = [], type = 'essay', maxMarks = 20) => {
     if (!userAnswer || userAnswer.trim().length < 10) {
       setError('Please provide a more detailed answer (at least 10 characters).');
       return null;
@@ -117,6 +117,7 @@ export function useEvaluation() {
         timestamp: new Date().toISOString(),
         question,
         wordCount: userAnswer.split(/\s+/).filter(Boolean).length,
+        maxMarks,
       };
 
       setEvaluation(result);

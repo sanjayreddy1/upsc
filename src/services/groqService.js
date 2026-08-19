@@ -7,7 +7,25 @@ import { GROQ_API_KEY, GROQ_API_URL, GROQ_MODEL, GROQ_FALLBACK_MODEL } from '../
 import { MAINS_SYLLABUS, PRELIMS_SYLLABUS, CSAT_SYLLABUS, CURRENT_AFFAIRS_CATEGORIES } from '../data/syllabus';
 import { performWebSearch } from './searchService';
 
-async function callGroqAPI(messages, temperature = 0.7, maxTokens = 2048) {
+async function reportTokenUsage(action, tokens_used) {
+  try {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    
+    await fetch('http://localhost:5000/api/logs/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ action, tokens_used })
+    });
+  } catch (e) {
+    console.error('Failed to report token usage:', e);
+  }
+}
+
+async function callGroqAPI(messages, temperature = 0.7, maxTokens = 2048, actionName = 'AI Request') {
   const enhancedMessages = messages.map(msg => {
     if (msg.role === 'system') {
       return {
@@ -57,10 +75,16 @@ async function callGroqAPI(messages, temperature = 0.7, maxTokens = 2048) {
       }
 
       const data = await fallbackResponse.json();
+      if (data.usage && data.usage.total_tokens) {
+        reportTokenUsage(actionName, data.usage.total_tokens);
+      }
       return data.choices[0].message.content;
     }
 
     const data = await response.json();
+    if (data.usage && data.usage.total_tokens) {
+      reportTokenUsage(actionName, data.usage.total_tokens);
+    }
     return data.choices[0].message.content;
   } catch (error) {
     console.error('Groq API Error:', error);

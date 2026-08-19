@@ -11,16 +11,13 @@ router.get('/users', auth, isAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
-        u.id, 
-        u.name, 
-        u.email, 
-        u.role, 
-        u.created_at,
-        COUNT(e.id) as total_tests_taken,
-        AVG(e.score / NULLIF(e.total, 0)) * 100 as average_score_percentage
-      FROM Users u
-      LEFT JOIN EvaluationMetrics e ON u.id = e.user_id
-      GROUP BY u.id, u.name, u.email, u.role, u.created_at
+        id, 
+        name, 
+        email, 
+        role, 
+        created_at
+      FROM Users
+      ORDER BY created_at DESC
     `);
 
     res.json(result.rows);
@@ -30,20 +27,37 @@ router.get('/users', auth, isAdmin, async (req, res) => {
   }
 });
 
-// @route   GET /api/admin/evaluations/:userId
-// @desc    Get detailed evaluation metrics for a specific user
-router.get('/evaluations/:userId', auth, isAdmin, async (req, res) => {
+// @route   GET /api/admin/tokens
+// @desc    Get all token usage history
+router.get('/tokens', auth, isAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
-        SELECT * FROM EvaluationMetrics 
-        WHERE user_id = $1 
-        ORDER BY created_at DESC
-      `, [req.params.userId]);
+        SELECT t.id, t.tokens_used, t.action, t.created_at, u.email 
+        FROM TokenUsage t
+        JOIN Users u ON t.user_id = u.id
+        ORDER BY t.created_at DESC
+      `);
 
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error fetching evaluations' });
+    res.status(500).json({ message: 'Server error fetching tokens' });
+  }
+});
+
+// @route   GET /api/admin/logs
+// @desc    Get all system logs
+router.get('/logs', auth, isAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+        SELECT * FROM SystemLogs 
+        ORDER BY created_at DESC
+      `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error fetching logs' });
   }
 });
 

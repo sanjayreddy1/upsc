@@ -1,5 +1,5 @@
 const { Pool } = require('pg');
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' });
 
 // Create PostgreSQL connection pool
 // Render provides a DATABASE_URL environment variable for Postgres natively.

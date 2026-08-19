@@ -125,4 +125,33 @@ router.delete('/flashcards', auth, async (req, res) => {
   }
 });
 
+// @route   GET /api/user/preferences
+// @desc    Get user application data (JSON)
+router.get('/preferences', auth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT app_data FROM Users WHERE id = $1', [req.user.id]);
+    res.json({ app_data: result.rows[0]?.app_data || '{}' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error fetching preferences' });
+  }
+});
+
+// @route   PUT /api/user/preferences
+// @desc    Update user application data
+router.put('/preferences', auth, async (req, res) => {
+  try {
+    const { app_data } = req.body;
+    
+    // Ensure it's stored as a string
+    const dataString = typeof app_data === 'string' ? app_data : JSON.stringify(app_data);
+
+    await pool.query('UPDATE Users SET app_data = $1 WHERE id = $2', [dataString, req.user.id]);
+    res.json({ message: 'Preferences updated successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error updating preferences' });
+  }
+});
+
 module.exports = router;

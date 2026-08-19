@@ -28,7 +28,10 @@ export default function Sidebar({ isOpen, onToggle }) {
   const { user, logout } = useAuth();
 
   const filteredNavItems = user && user.role === 'admin' 
-    ? [...NAV_ITEMS, { path: '/admin', label: 'Admin Panel', icon: '👑', description: 'Manage Users' }]
+    ? [
+        { path: '/admin', label: 'Admin Panel', icon: '👑', description: 'System Overview' },
+        { path: '/settings', label: 'Settings', icon: '⚙️', description: 'App Preferences' }
+      ]
     : NAV_ITEMS;
 
   return (

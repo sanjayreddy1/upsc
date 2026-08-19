@@ -69,9 +69,16 @@ export default function Dashboard() {
   const { streak } = useStreak();
 
   useEffect(() => {
-    setEssayHistory(getEvaluationHistory('essay'));
-    setMcqHistory(getMCQHistory());
+    const fetchHistory = () => {
+      setEssayHistory(getEvaluationHistory('essay'));
+      setMcqHistory(getMCQHistory());
+    };
+    
+    fetchHistory();
     setRandomCard(ALL_SOCIOLOGY_FLASHCARDS[Math.floor(Math.random() * ALL_SOCIOLOGY_FLASHCARDS.length)]);
+
+    window.addEventListener('historyUpdated', fetchHistory);
+    return () => window.removeEventListener('historyUpdated', fetchHistory);
   }, []);
 
   useEffect(() => {

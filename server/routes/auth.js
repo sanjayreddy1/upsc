@@ -8,7 +8,7 @@ const router = express.Router();
 // Helper for basic password strength validation
 function validatePassword(password) {
   // At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character
-  const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
   return re.test(password);
 }
 

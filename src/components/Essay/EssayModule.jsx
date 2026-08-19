@@ -26,10 +26,16 @@ export default function EssayModule() {
   const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('essay_eval_history') || '[]');
-      setHistory(saved);
-    } catch (e) {}
+    const fetchHistory = () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem('essay_eval_history') || '[]');
+        setHistory(saved);
+      } catch (e) {}
+    };
+    
+    fetchHistory();
+    window.addEventListener('historyUpdated', fetchHistory);
+    return () => window.removeEventListener('historyUpdated', fetchHistory);
   }, []);
 
   const { loading, error, getEssayQuestions } = useQuestionGenerator();
@@ -61,7 +67,7 @@ export default function EssayModule() {
     const question = questions[paper]?.[idx];
     if (!answer || !question) return;
 
-    const result = await evaluate(question.question, answer, question.keyPoints || [], 'essay');
+    const result = await evaluate(question.question, answer, question.keyPoints || [], 'essay', question.marks || 20);
     if (result) {
       const evalWithMeta = {
         ...result,

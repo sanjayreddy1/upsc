@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS EvaluationMetrics (
 
 -- Insert default admin user if not exists
 INSERT INTO Users (name, email, password_hash, role)
-SELECT 'Admin User', 'admin@upsc.com', '$2b$10$QOa6NnPxW7wG0y6D2nQzReJ1v2a2Xk5J2z3Xw3v2y3z3v2z3v2z3v', 'admin'
+SELECT 'Admin User', 'admin@upsc.com', '$2b$10$Lk4YZ09s6TC1d5F8GREAh.pG3tP4ByxyxM.6P6D.sSPYkaya3gNCq', 'admin'
 WHERE NOT EXISTS (SELECT 1 FROM Users WHERE email = 'admin@upsc.com');
 
 -- Create Streaks table
@@ -44,4 +44,22 @@ CREATE TABLE IF NOT EXISTS SavedFlashcards (
     topic VARCHAR(255),
     subject VARCHAR(255),
     saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create TokenUsage table
+CREATE TABLE IF NOT EXISTS TokenUsage (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES Users(id),
+    tokens_used INT NOT NULL,
+    action VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create SystemLogs table
+CREATE TABLE IF NOT EXISTS SystemLogs (
+    id SERIAL PRIMARY KEY,
+    level VARCHAR(20) NOT NULL,
+    message TEXT NOT NULL,
+    meta TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

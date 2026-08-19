@@ -38,8 +38,8 @@ export default function EvaluationPanel({ evaluation, onClose }) {
   // Determine score representation
   const isMCQ = type === 'mcq';
   const displayPercentage = isMCQ ? percentage : finalScore;
-  const maxScore = isMCQ ? evaluation.totalQuestions * 2 : 20; // 2 marks per MCQ, 20 max for Essay
-  const calculatedScore = isMCQ ? evaluation.rawScore : Math.round((displayPercentage / 100) * 20);
+  const maxScore = isMCQ ? evaluation.totalQuestions * 2 : evaluation.maxMarks || 20;
+  const calculatedScore = isMCQ ? evaluation.rawScore : Math.round((displayPercentage / 100) * (evaluation.maxMarks || 20));
 
   const handleDownloadPDF = () => {
     const element = evalRef.current;
