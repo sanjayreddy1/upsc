@@ -7,31 +7,10 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('auth_token'));
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (token) {
-      localStorage.setItem('auth_token', token);
-      // Ideally you'd fetch the user profile from the API here to verify the token,
-      // but for simplicity, we assume if token is present, we rely on the decoded user obj
-      // saved during login/register
-      const savedUser = localStorage.getItem('auth_user');
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
-        // Hydrate data silently in background on reload
-        hydrateCloudData(token);
-      }
-    } else {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_user');
-      setUser(null);
-    }
-    setLoading(false);
-  }, [token]);
-
   const hydrateCloudData = async (jwtToken) => {
     try {
       const headers = { 'Authorization': `Bearer ${jwtToken}` };
       
-      // Fetch evaluations
       const evalRes = await fetch('http://localhost:5000/api/user/evaluations', { headers });
       if (evalRes.ok) {
         const evals = await evalRes.json();
@@ -53,11 +32,9 @@ export function AuthProvider({ children }) {
         
         localStorage.setItem('mcq_history', JSON.stringify(mcq.slice(0, 50)));
         localStorage.setItem('eval_history_essay', JSON.stringify(essay.slice(0, 50)));
-        // Dispatch event so Dashboard re-renders if it's already mounted
         window.dispatchEvent(new Event('historyUpdated'));
       }
 
-      // Fetch preferences
       const prefRes = await fetch('http://localhost:5000/api/user/preferences', { headers });
       if (prefRes.ok) {
         const { app_data } = await prefRes.json();
@@ -97,6 +74,22 @@ export function AuthProvider({ children }) {
       console.warn('Failed to sync prefs', e);
     }
   };
+
+  useEffect(() => {
+    if (token) {
+      localStorage.setItem('auth_token', token);
+      const savedUser = localStorage.getItem('auth_user');
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+        hydrateCloudData(token);
+      }
+    } else {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      setUser(null);
+    }
+    setLoading(false);
+  }, [token]);
 
   const login = async (jwtToken, userData) => {
     setToken(jwtToken);
