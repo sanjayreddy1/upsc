@@ -27,9 +27,9 @@ export default function AdminDashboard() {
         const headers = { 'Authorization': `Bearer ${token}` };
         
         const [usersRes, tokensRes, logsRes] = await Promise.all([
-          fetch('http://localhost:5000/api/admin/users', { headers }),
-          fetch('http://localhost:5000/api/admin/tokens', { headers }),
-          fetch('http://localhost:5000/api/admin/logs', { headers })
+          fetch('/api/admin/users', { headers }),
+          fetch('/api/admin/tokens', { headers }),
+          fetch('/api/admin/logs', { headers })
         ]);
 
         if (!usersRes.ok || !tokensRes.ok || !logsRes.ok) {

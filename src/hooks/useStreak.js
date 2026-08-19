@@ -10,7 +10,7 @@ export function useStreak() {
   const fetchStreak = useCallback(async () => {
     if (token) {
       try {
-        const res = await fetch('http://localhost:5000/api/user/streak', {
+        const res = await fetch('/api/user/streak', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -85,7 +85,7 @@ export function useStreak() {
 
     if (token) {
       try {
-        await fetch('http://localhost:5000/api/user/streak', {
+        await fetch('/api/user/streak', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

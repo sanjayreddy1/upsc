@@ -12,7 +12,7 @@ async function reportTokenUsage(action, tokens_used) {
     const token = localStorage.getItem('auth_token');
     if (!token) return;
     
-    await fetch('http://localhost:5000/api/logs/token', {
+    await fetch('/api/logs/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

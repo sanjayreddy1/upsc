@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
     try {
       const headers = { 'Authorization': `Bearer ${jwtToken}` };
       
-      const evalRes = await fetch('http://localhost:5000/api/user/evaluations', { headers });
+      const evalRes = await fetch('/api/user/evaluations', { headers });
       if (evalRes.ok) {
         const evals = await evalRes.json();
         const mcq = evals.filter(e => e.test_type === 'mcq').map(e => ({
@@ -35,7 +35,7 @@ export function AuthProvider({ children }) {
         window.dispatchEvent(new Event('historyUpdated'));
       }
 
-      const prefRes = await fetch('http://localhost:5000/api/user/preferences', { headers });
+      const prefRes = await fetch('/api/user/preferences', { headers });
       if (prefRes.ok) {
         const { app_data } = await prefRes.json();
         const prefs = JSON.parse(app_data || '{}');
@@ -62,7 +62,7 @@ export function AuthProvider({ children }) {
         if (val) prefs[key] = val;
       });
 
-      await fetch('http://localhost:5000/api/user/preferences', {
+      await fetch('/api/user/preferences', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

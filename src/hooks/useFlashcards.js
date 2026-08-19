@@ -9,7 +9,7 @@ export function useFlashcards() {
   const fetchFlashcards = useCallback(async () => {
     if (token) {
       try {
-        const res = await fetch('http://localhost:5000/api/user/flashcards', {
+        const res = await fetch('/api/user/flashcards', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -58,7 +58,7 @@ export function useFlashcards() {
       // Unsave
       if (token) {
         try {
-          await fetch('http://localhost:5000/api/user/flashcards', {
+          await fetch('/api/user/flashcards', {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ export function useFlashcards() {
       // Save
       if (token) {
         try {
-          await fetch('http://localhost:5000/api/user/flashcards', {
+          await fetch('/api/user/flashcards', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

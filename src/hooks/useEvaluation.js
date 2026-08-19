@@ -18,7 +18,7 @@ export function useEvaluation() {
   const saveToBackend = async (payload) => {
     if (!token) return false;
     try {
-      const res = await fetch('http://localhost:5000/api/user/evaluations', {
+      const res = await fetch('/api/user/evaluations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
