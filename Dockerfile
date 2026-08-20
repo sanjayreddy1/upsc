@@ -17,6 +17,9 @@ COPY . .
 # Build the Vite React frontend
 RUN npm run build
 
+# Set production mode so Express serves the built frontend
+ENV NODE_ENV=production
+
 # Expose the API port
 EXPOSE 5000
 
