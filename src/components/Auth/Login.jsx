@@ -30,7 +30,7 @@ export default function Login() {
       }
 
       login(data.token, data.user);
-      navigate('/');
+      navigate(data.user.role === 'admin' ? '/admin' : '/');
     } catch (err) {
       setError(err.message);
     } finally {
