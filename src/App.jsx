@@ -21,6 +21,7 @@ import Settings from './components/Settings/Settings';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import AdminDashboard from './components/Admin/AdminDashboard';
+import EvaluationHistory from './components/History/EvaluationHistory';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { useNotification } from './hooks/useNotification';
 import { initNotificationEngine } from './services/notificationEngine';
@@ -41,6 +42,7 @@ const PAGE_TITLES = {
   '/syllabus': { title: 'Custom Syllabus', subtitle: 'Upload & Generate Custom Questions' },
   '/pyq': { title: 'PYQ Archive', subtitle: 'Live Web PYQ Search' },
   '/pib-news': { title: 'PIB News', subtitle: 'Latest Press Information Bureau Updates' },
+  '/history': { title: 'Evaluation History', subtitle: 'Your complete performance record' },
   '/settings': { title: 'Settings', subtitle: 'App Configuration & Preferences' },
   '/login': { title: 'Login', subtitle: 'Sign in to your account' },
   '/register': { title: 'Register', subtitle: 'Create a new account' },
@@ -104,6 +106,7 @@ function AppContent() {
             <Route path="/syllabus" element={<PrivateRoute><UploadSyllabus /></PrivateRoute>} />
             <Route path="/pyq" element={<PrivateRoute><PYQModule /></PrivateRoute>} />
             <Route path="/pib-news" element={<PrivateRoute><PIBNews /></PrivateRoute>} />
+            <Route path="/history" element={<PrivateRoute><EvaluationHistory /></PrivateRoute>} />
             <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
             <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
           </Routes>

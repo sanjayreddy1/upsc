@@ -108,4 +108,23 @@ router.get('/activity', auth, isAdmin, async (req, res) => {
   }
 });
 
+// @route   GET /api/admin/evaluations
+// @desc    Get all users' evaluation scores and history
+router.get('/evaluations', auth, isAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+        SELECT e.id, e.test_type, e.score, e.total, e.details, e.created_at, u.email, u.name
+        FROM EvaluationMetrics e
+        JOIN Users u ON e.user_id = u.id
+        ORDER BY e.created_at DESC
+        LIMIT 500
+      `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error fetching evaluations' });
+  }
+});
+
 module.exports = router;

@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { path: '/prelims', label: 'Prelims Bits', icon: '🎯', description: 'Subject MCQs' },
   { path: '/polity', label: 'Polity MCQs', icon: '🏛️', description: 'Constitutional Framework' },
   { path: '/pyq', label: 'PYQ Archive', icon: '🏛️', description: 'Live Web PYQ Search' },
+  { path: '/history', label: 'Eval History', icon: '🕒', description: 'Performance Record' },
   { path: '/ocr', label: 'OCR Scanner', icon: '📷', description: 'Scan & Analyze' },
   { path: '/syllabus', label: 'Upload Syllabus', icon: '📑', description: 'Custom AI Prep' },
   { path: '/settings', label: 'Settings', icon: '⚙️', description: 'App Preferences' },

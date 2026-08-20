@@ -10,7 +10,7 @@ export default function AdminDashboard() {
   
   const [users, setUsers] = useState([]);
   const [tokens, setTokens] = useState([]);
-  const [logs, setLogs] = useState([]);
+  const [evaluations, setEvaluations] = useState([]);
   const [activity, setActivity] = useState([]);
   
   const [loading, setLoading] = useState(true);
@@ -27,31 +27,26 @@ export default function AdminDashboard() {
         setLoading(true);
         const headers = { 'Authorization': `Bearer ${token}` };
         
-        const [usersRes, tokensRes, logsRes, activityRes] = await Promise.all([
+        const [usersRes, tokensRes, evalsRes, activityRes] = await Promise.all([
           fetch('/api/admin/users', { headers }),
           fetch('/api/admin/tokens', { headers }),
-          fetch('/api/admin/logs', { headers }),
+          fetch('/api/admin/evaluations', { headers }),
           fetch('/api/admin/activity', { headers })
         ]);
 
-        if (!usersRes.ok || !tokensRes.ok || !logsRes.ok) {
-          const uTxt = await usersRes.text().catch(() => '');
-          const tTxt = await tokensRes.text().catch(() => '');
-          const lTxt = await logsRes.text().catch(() => '');
-          throw new Error(`Failed to fetch admin data. Users: ${usersRes.status} ${uTxt} | Tokens: ${tokensRes.status} ${tTxt} | Logs: ${logsRes.status} ${lTxt}`);
+        if (!usersRes.ok) {
+          const txt = await usersRes.text().catch(() => '');
+          throw new Error(`Failed to fetch users: ${usersRes.status} ${txt}`);
         }
 
+        const usersData = await usersRes.json();
+        const tokensData = tokensRes.ok ? await tokensRes.json() : [];
+        const evalsData = evalsRes.ok ? await evalsRes.json() : [];
         const activityData = activityRes.ok ? await activityRes.json() : [];
-
-        const [usersData, tokensData, logsData] = await Promise.all([
-          usersRes.json(),
-          tokensRes.json(),
-          logsRes.json()
-        ]);
 
         setUsers(usersData);
         setTokens(tokensData);
-        setLogs(logsData);
+        setEvaluations(evalsData);
         setActivity(activityData);
       } catch (err) {
         setError(err.message);
@@ -65,33 +60,63 @@ export default function AdminDashboard() {
 
   if (loading) return <div className="flex-center" style={{ height: '50vh' }}>Loading Admin Panel...</div>;
 
+  // Compute stats
+  const totalEssays = evaluations.filter(e => e.test_type === 'essay').length;
+  const totalMCQs = evaluations.filter(e => e.test_type === 'mcq').length;
+  const totalTokensUsed = tokens.reduce((sum, t) => sum + (t.tokens_used || 0), 0);
+
   return (
     <div className="admin-container animate-fade-in" style={{ padding: '20px' }}>
       <h2>👑 Admin Dashboard</h2>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
-        Complete system overview: Users, Token Usage, and Logs.
+        Complete system overview: Users, Evaluations, Token Usage, and Activity.
       </p>
       
       {error && <div className="error-banner">{error}</div>}
 
-      <div style={{ display: 'flex', gap: '15px', marginBottom: '25px' }}>
+      {/* Quick Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+        <div className="glass-card" style={{ padding: '16px', textAlign: 'center', borderTop: '3px solid var(--accent-blue)' }}>
+          <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{users.length}</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Total Users</div>
+        </div>
+        <div className="glass-card" style={{ padding: '16px', textAlign: 'center', borderTop: '3px solid var(--accent-violet)' }}>
+          <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{evaluations.length}</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Evaluations</div>
+        </div>
+        <div className="glass-card" style={{ padding: '16px', textAlign: 'center', borderTop: '3px solid var(--accent-emerald)' }}>
+          <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{totalEssays}</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Essays</div>
+        </div>
+        <div className="glass-card" style={{ padding: '16px', textAlign: 'center', borderTop: '3px solid var(--accent-amber)' }}>
+          <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{totalMCQs}</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>MCQ Sessions</div>
+        </div>
+        <div className="glass-card" style={{ padding: '16px', textAlign: 'center', borderTop: '3px solid var(--accent-cyan)' }}>
+          <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{totalTokensUsed.toLocaleString()}</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Tokens Used</div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '25px', flexWrap: 'wrap' }}>
         <button 
           className={`btn ${activeTab === 'users' ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => setActiveTab('users')}
         >
-          Users Details
+          Users
+        </button>
+        <button 
+          className={`btn ${activeTab === 'evaluations' ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => setActiveTab('evaluations')}
+        >
+          Evaluations
         </button>
         <button 
           className={`btn ${activeTab === 'tokens' ? 'btn-primary' : 'btn-outline'}`}
           onClick={() => setActiveTab('tokens')}
         >
           Token Usage
-        </button>
-        <button 
-          className={`btn ${activeTab === 'logs' ? 'btn-primary' : 'btn-outline'}`}
-          onClick={() => setActiveTab('logs')}
-        >
-          System Logs
         </button>
         <button 
           className={`btn ${activeTab === 'activity' ? 'btn-primary' : 'btn-outline'}`}
@@ -102,6 +127,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="glass-card" style={{ overflowX: 'auto' }}>
+        {/* Users Tab */}
         {activeTab === 'users' && (
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
@@ -142,6 +168,85 @@ export default function AdminDashboard() {
           </table>
         )}
 
+        {/* Evaluations Tab — All users' scores */}
+        {activeTab === 'evaluations' && (
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <th style={{ padding: '15px' }}>ID</th>
+                <th style={{ padding: '15px' }}>User</th>
+                <th style={{ padding: '15px' }}>Type</th>
+                <th style={{ padding: '15px' }}>Score</th>
+                <th style={{ padding: '15px' }}>Details</th>
+                <th style={{ padding: '15px' }}>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {evaluations.map(e => {
+                let details;
+                try { details = typeof e.details === 'string' ? JSON.parse(e.details) : e.details; } catch { details = {}; }
+                const percentage = e.test_type === 'mcq' ? (details?.percentage || Math.round((e.score / e.total) * 100)) : e.score;
+
+                return (
+                  <tr key={e.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <td style={{ padding: '15px', color: 'var(--text-muted)' }}>{e.id}</td>
+                    <td style={{ padding: '15px' }}>
+                      <div style={{ fontWeight: 500 }}>{e.name}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{e.email}</div>
+                    </td>
+                    <td style={{ padding: '15px' }}>
+                      <span style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        background: e.test_type === 'essay' ? 'rgba(102, 126, 234, 0.15)' : 'rgba(52, 211, 153, 0.15)',
+                        color: e.test_type === 'essay' ? 'var(--accent-blue)' : 'var(--accent-emerald)',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {e.test_type === 'essay' ? '📝 ESSAY' : '🎯 MCQ'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '15px' }}>
+                      <span style={{
+                        fontWeight: 700,
+                        fontSize: '1.1rem',
+                        color: percentage >= 70 ? 'var(--accent-emerald)' : percentage >= 40 ? 'var(--accent-amber)' : 'var(--accent-rose)'
+                      }}>
+                        {percentage}%
+                      </span>
+                      {e.test_type === 'mcq' && (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '8px' }}>
+                          ({Math.round(e.score)}/{e.total})
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ padding: '15px', color: 'var(--text-secondary)', maxWidth: '250px', fontSize: '0.85rem' }}>
+                      {e.test_type === 'essay' ? (
+                        details?.question ? details.question.substring(0, 60) + '...' : 'Essay evaluation'
+                      ) : (
+                        `✅ ${details?.correct || 0} · ❌ ${details?.incorrect || 0}`
+                      )}
+                    </td>
+                    <td style={{ padding: '15px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
+                      {new Date(e.created_at).toLocaleString('en-IN', {
+                        day: '2-digit', month: 'short', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                      })}
+                    </td>
+                  </tr>
+                );
+              })}
+              {evaluations.length === 0 && (
+                <tr>
+                  <td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No evaluations recorded yet</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+
+        {/* Token Usage Tab */}
         {activeTab === 'tokens' && (
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
@@ -172,41 +277,7 @@ export default function AdminDashboard() {
           </table>
         )}
 
-        {activeTab === 'logs' && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                <th style={{ padding: '15px' }}>ID</th>
-                <th style={{ padding: '15px' }}>Level</th>
-                <th style={{ padding: '15px' }}>Message</th>
-                <th style={{ padding: '15px' }}>Timestamp</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map(l => (
-                <tr key={l.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '15px' }}>{l.id}</td>
-                  <td style={{ padding: '15px' }}>
-                    <span style={{
-                      color: l.level === 'error' ? 'var(--accent-rose)' : 'var(--accent-blue)',
-                      fontWeight: 600
-                    }}>
-                      {l.level.toUpperCase()}
-                    </span>
-                  </td>
-                  <td style={{ padding: '15px' }}>{l.message}</td>
-                  <td style={{ padding: '15px', color: 'var(--text-secondary)' }}>{new Date(l.created_at).toLocaleString()}</td>
-                </tr>
-              ))}
-              {logs.length === 0 && (
-                <tr>
-                  <td colSpan="4" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No system logs found</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
-
+        {/* Activity Logs Tab */}
         {activeTab === 'activity' && (
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
