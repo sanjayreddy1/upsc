@@ -14,6 +14,14 @@ RUN cd server && npm install
 # Copy all source files
 COPY . .
 
+# Declare build args — Render passes matching env vars as Docker build args
+ARG VITE_GROQ_API_KEY
+ARG VITE_TAVILY_API_KEY
+
+# Make them available as env vars during build so Vite can bake them in
+ENV VITE_GROQ_API_KEY=$VITE_GROQ_API_KEY
+ENV VITE_TAVILY_API_KEY=$VITE_TAVILY_API_KEY
+
 # Build the Vite React frontend
 RUN npm run build
 
