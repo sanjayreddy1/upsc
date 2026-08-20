@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const { pool } = require('../config/db');
 const { auth, isAdmin } = require('../middleware/auth');
+const { logActivity } = require('../helpers/activityLogger');
 
 const router = express.Router();
 
@@ -79,10 +80,31 @@ router.put('/change-password', auth, isAdmin, async (req, res) => {
       [passwordHash, userId]
     );
 
+    logActivity({ userId: req.user.id, action: 'ADMIN_CHANGE_PASSWORD', detail: `Admin changed password for user ID: ${userId}`, ip: req.ip });
+
     res.json({ message: 'Password updated successfully' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error updating password' });
+  }
+});
+
+// @route   GET /api/admin/activity
+// @desc    Get all user activity logs
+router.get('/activity', auth, isAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+        SELECT a.id, a.action, a.detail, a.ip_address, a.created_at, u.email, u.name
+        FROM ActivityLogs a
+        LEFT JOIN Users u ON a.user_id = u.id
+        ORDER BY a.created_at DESC
+        LIMIT 500
+      `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error fetching activity logs' });
   }
 });
 

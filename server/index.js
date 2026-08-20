@@ -11,7 +11,29 @@ const logsRoutes = require('./routes/logs');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Auto-create ActivityLogs table if it doesn't exist
+const { pool } = require('./config/db');
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS ActivityLogs (
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES Users(id) ON DELETE SET NULL,
+        action VARCHAR(100) NOT NULL,
+        detail TEXT,
+        ip_address VARCHAR(45),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON ActivityLogs (created_at DESC);`);
+    console.log('ActivityLogs table ready.');
+  } catch (err) {
+    console.warn('ActivityLogs auto-migration skipped:', err.message);
+  }
+})();
+
 // Middleware
+app.set('trust proxy', true); // Get real client IP behind Render's proxy
 app.use(cors());
 app.use(express.json());
 

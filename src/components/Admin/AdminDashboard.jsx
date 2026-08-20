@@ -11,6 +11,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [tokens, setTokens] = useState([]);
   const [logs, setLogs] = useState([]);
+  const [activity, setActivity] = useState([]);
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -26,10 +27,11 @@ export default function AdminDashboard() {
         setLoading(true);
         const headers = { 'Authorization': `Bearer ${token}` };
         
-        const [usersRes, tokensRes, logsRes] = await Promise.all([
+        const [usersRes, tokensRes, logsRes, activityRes] = await Promise.all([
           fetch('/api/admin/users', { headers }),
           fetch('/api/admin/tokens', { headers }),
-          fetch('/api/admin/logs', { headers })
+          fetch('/api/admin/logs', { headers }),
+          fetch('/api/admin/activity', { headers })
         ]);
 
         if (!usersRes.ok || !tokensRes.ok || !logsRes.ok) {
@@ -38,6 +40,8 @@ export default function AdminDashboard() {
           const lTxt = await logsRes.text().catch(() => '');
           throw new Error(`Failed to fetch admin data. Users: ${usersRes.status} ${uTxt} | Tokens: ${tokensRes.status} ${tTxt} | Logs: ${logsRes.status} ${lTxt}`);
         }
+
+        const activityData = activityRes.ok ? await activityRes.json() : [];
 
         const [usersData, tokensData, logsData] = await Promise.all([
           usersRes.json(),
@@ -48,6 +52,7 @@ export default function AdminDashboard() {
         setUsers(usersData);
         setTokens(tokensData);
         setLogs(logsData);
+        setActivity(activityData);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -87,6 +92,12 @@ export default function AdminDashboard() {
           onClick={() => setActiveTab('logs')}
         >
           System Logs
+        </button>
+        <button 
+          className={`btn ${activeTab === 'activity' ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => setActiveTab('activity')}
+        >
+          Activity Logs
         </button>
       </div>
 
@@ -190,6 +201,67 @@ export default function AdminDashboard() {
               {logs.length === 0 && (
                 <tr>
                   <td colSpan="4" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No system logs found</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+
+        {activeTab === 'activity' && (
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <th style={{ padding: '15px' }}>ID</th>
+                <th style={{ padding: '15px' }}>User</th>
+                <th style={{ padding: '15px' }}>Action</th>
+                <th style={{ padding: '15px' }}>Detail</th>
+                <th style={{ padding: '15px' }}>IP</th>
+                <th style={{ padding: '15px' }}>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activity.map(a => {
+                const actionColors = {
+                  'LOGIN_SUCCESS': { bg: 'rgba(52, 211, 153, 0.15)', color: 'var(--accent-emerald)' },
+                  'LOGIN_FAILED': { bg: 'rgba(244, 63, 94, 0.15)', color: 'var(--accent-rose)' },
+                  'REGISTER': { bg: 'rgba(139, 92, 246, 0.15)', color: 'var(--accent-violet)' },
+                  'SAVE_EVALUATION': { bg: 'rgba(56, 189, 248, 0.15)', color: 'var(--accent-blue)' },
+                  'SAVE_FLASHCARD': { bg: 'rgba(251, 191, 36, 0.15)', color: 'var(--accent-amber)' },
+                  'DELETE_FLASHCARD': { bg: 'rgba(244, 63, 94, 0.1)', color: 'var(--accent-rose)' },
+                  'UPDATE_STREAK': { bg: 'rgba(52, 211, 153, 0.1)', color: 'var(--accent-emerald)' },
+                  'UPDATE_PREFERENCES': { bg: 'rgba(148, 163, 184, 0.15)', color: 'var(--text-secondary)' },
+                  'ADMIN_CHANGE_PASSWORD': { bg: 'rgba(244, 63, 94, 0.2)', color: 'var(--accent-rose)' },
+                };
+                const style = actionColors[a.action] || { bg: 'rgba(148, 163, 184, 0.1)', color: 'var(--text-secondary)' };
+                return (
+                  <tr key={a.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <td style={{ padding: '15px' }}>{a.id}</td>
+                    <td style={{ padding: '15px' }}>
+                      <div style={{ fontWeight: 500 }}>{a.name || '—'}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{a.email || 'Unknown'}</div>
+                    </td>
+                    <td style={{ padding: '15px' }}>
+                      <span style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        background: style.bg,
+                        color: style.color,
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {a.action}
+                      </span>
+                    </td>
+                    <td style={{ padding: '15px', color: 'var(--text-secondary)', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.detail || '—'}</td>
+                    <td style={{ padding: '15px', fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{a.ip_address || '—'}</td>
+                    <td style={{ padding: '15px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{new Date(a.created_at).toLocaleString()}</td>
+                  </tr>
+                );
+              })}
+              {activity.length === 0 && (
+                <tr>
+                  <td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No activity logs yet</td>
                 </tr>
               )}
             </tbody>

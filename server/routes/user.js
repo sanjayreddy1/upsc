@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/db');
 const { auth } = require('../middleware/auth');
+const { logActivity } = require('../helpers/activityLogger');
 
 const router = express.Router();
 
@@ -14,6 +15,8 @@ router.post('/evaluations', auth, async (req, res) => {
       INSERT INTO EvaluationMetrics (user_id, test_type, score, total, details)
       VALUES ($1, $2, $3, $4, $5)
     `, [req.user.id, test_type, score, total, JSON.stringify(details || {})]);
+
+    logActivity({ userId: req.user.id, action: 'SAVE_EVALUATION', detail: `${test_type} — Score: ${score}/${total}`, ip: req.ip });
 
     res.json({ message: 'Evaluation saved successfully' });
   } catch (err) {
@@ -73,6 +76,8 @@ router.put('/streak', auth, async (req, res) => {
       WHERE user_id = $5
     `, [currentStreak, highestStreak, lastTestDate, completedToday ? true : false, req.user.id]);
 
+    logActivity({ userId: req.user.id, action: 'UPDATE_STREAK', detail: `Streak: ${currentStreak} (best: ${highestStreak})`, ip: req.ip });
+
     res.json({ message: 'Streak updated successfully' });
   } catch (err) {
     console.error(err);
@@ -103,6 +108,8 @@ router.post('/flashcards', auth, async (req, res) => {
       VALUES ($1, $2, $3, $4, $5)
     `, [req.user.id, question, answer, topic, subject]);
 
+    logActivity({ userId: req.user.id, action: 'SAVE_FLASHCARD', detail: `Topic: ${topic || 'General'} — ${subject || 'N/A'}`, ip: req.ip });
+
     res.json({ message: 'Flashcard saved successfully' });
   } catch (err) {
     console.error(err);
@@ -117,6 +124,8 @@ router.delete('/flashcards', auth, async (req, res) => {
     const { question } = req.body;
 
     await pool.query('DELETE FROM SavedFlashcards WHERE user_id = $1 AND question = $2', [req.user.id, question]);
+
+    logActivity({ userId: req.user.id, action: 'DELETE_FLASHCARD', detail: `Removed flashcard`, ip: req.ip });
 
     res.json({ message: 'Flashcard removed successfully' });
   } catch (err) {
@@ -147,6 +156,9 @@ router.put('/preferences', auth, async (req, res) => {
     const dataString = typeof app_data === 'string' ? app_data : JSON.stringify(app_data);
 
     await pool.query('UPDATE Users SET app_data = $1 WHERE id = $2', [dataString, req.user.id]);
+
+    logActivity({ userId: req.user.id, action: 'UPDATE_PREFERENCES', detail: 'User updated app preferences', ip: req.ip });
+
     res.json({ message: 'Preferences updated successfully' });
   } catch (err) {
     console.error(err);

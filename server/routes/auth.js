@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
+const { logActivity } = require('../helpers/activityLogger');
 
 const router = express.Router();
 
@@ -57,6 +58,8 @@ router.post('/register', async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    logActivity({ userId: user.id, action: 'REGISTER', detail: `New user registered: ${user.email}`, ip: req.ip });
+
     res.status(201).json({
       token,
       user: { id: user.id, name: user.name, email: user.email, role: user.role }
@@ -80,6 +83,7 @@ router.post('/login', async (req, res) => {
     const result = await pool.query('SELECT * FROM Users WHERE email = $1', [email]);
 
     if (result.rows.length === 0) {
+      logActivity({ userId: null, action: 'LOGIN_FAILED', detail: `Failed login attempt for unknown email: ${email}`, ip: req.ip });
       return res.status(400).json({ message: 'No account with this email has been registered.' });
     }
 
@@ -87,6 +91,7 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!isMatch) {
+      logActivity({ userId: user.id, action: 'LOGIN_FAILED', detail: `Wrong password for: ${user.email}`, ip: req.ip });
       return res.status(400).json({ message: 'Invalid credentials.' });
     }
 
@@ -95,6 +100,8 @@ router.post('/login', async (req, res) => {
       process.env.JWT_SECRET || 'super_secret_jwt_key_123',
       { expiresIn: '7d' }
     );
+
+    logActivity({ userId: user.id, action: 'LOGIN_SUCCESS', detail: `User logged in: ${user.email}`, ip: req.ip });
 
     res.json({
       token,
