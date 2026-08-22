@@ -33,7 +33,7 @@ export default function EvaluationPanel({ evaluation, onClose }) {
 
   if (!evaluation) return null;
 
-  const type = evaluation.type || 'essay';
+  const { type = 'essay', finalScore, percentage, algorithmicScores, aiEvaluation } = evaluation;
   const isMCQ = type === 'mcq';
   const displayPercentage = isMCQ ? (percentage ?? evaluation.score ?? 0) : (finalScore ?? evaluation.score ?? 0);
   const maxScore = isMCQ ? (evaluation.totalQuestions || evaluation.total || 0) * 2 : (evaluation.maxMarks || evaluation.total || 20);
