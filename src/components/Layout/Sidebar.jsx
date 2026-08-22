@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useStreak } from '../../hooks/useStreak';
 import { useAuth } from '../../hooks/useAuth';
@@ -27,6 +28,16 @@ export default function Sidebar({ isOpen, onToggle }) {
   const navigate = useNavigate();
   const { streak, completedToday } = useStreak();
   const { user, logout } = useAuth();
+  const [appVersion, setAppVersion] = useState('1.0.0');
+
+  useEffect(() => {
+    fetch('/api/user/whatsnew')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && data.version) setAppVersion(data.version);
+      })
+      .catch(() => {});
+  }, []);
 
   const filteredNavItems = user && user.role === 'admin' 
     ? [
@@ -112,7 +123,7 @@ export default function Sidebar({ isOpen, onToggle }) {
               </div>
             </div>
           </div>
-          <p className="sidebar-version">UPSC Prep v1.0</p>
+          <p className="sidebar-version">UPSC Prep v{appVersion}</p>
         </div>
       </aside>
     </>
