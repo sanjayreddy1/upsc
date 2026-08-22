@@ -25,6 +25,7 @@ import EvaluationHistory from './components/History/EvaluationHistory';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { useNotification } from './hooks/useNotification';
 import { initNotificationEngine } from './services/notificationEngine';
+import ErrorBoundary from './components/Common/ErrorBoundary';
 import './App.css';
 
 const PAGE_TITLES = {
@@ -87,6 +88,7 @@ function AppContent() {
           />
         )}
         <div className="app-content">
+          <ErrorBoundary>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -110,6 +112,7 @@ function AppContent() {
             <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
             <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
           </Routes>
+          </ErrorBoundary>
         </div>
       </main>
       {!isAuthPage && <Chatbot />}

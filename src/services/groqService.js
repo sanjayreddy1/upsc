@@ -25,7 +25,7 @@ async function reportTokenUsage(action, tokens_used) {
   }
 }
 
-async function callGroqAPI(messages, temperature = 0.7, maxTokens = 2048, actionName = 'AI Request') {
+async function callGroqAPI(messages, temperature = 0.7, maxTokens = 2048, actionName = 'AI Request', retries = 2) {
   const enhancedMessages = messages.map(msg => {
     if (msg.role === 'system') {
       return {
@@ -36,32 +36,16 @@ async function callGroqAPI(messages, temperature = 0.7, maxTokens = 2048, action
     return msg;
   });
 
-  try {
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: GROQ_MODEL,
-        messages: enhancedMessages,
-        temperature,
-        max_tokens: maxTokens,
-        stream: false,
-      }),
-    });
-
-    if (!response.ok) {
-      // Try fallback model
-      const fallbackResponse = await fetch(GROQ_API_URL, {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(GROQ_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-          model: GROQ_FALLBACK_MODEL,
+          model: GROQ_MODEL,
           messages: enhancedMessages,
           temperature,
           max_tokens: maxTokens,
@@ -69,26 +53,49 @@ async function callGroqAPI(messages, temperature = 0.7, maxTokens = 2048, action
         }),
       });
 
-      if (!fallbackResponse.ok) {
-        const errBody = await fallbackResponse.text().catch(() => '');
-        throw new Error(`API Error: ${fallbackResponse.status} — ${errBody.substring(0, 200)}`);
+      if (!response.ok) {
+        // Try fallback model
+        const fallbackResponse = await fetch(GROQ_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${GROQ_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: GROQ_FALLBACK_MODEL,
+            messages: enhancedMessages,
+            temperature,
+            max_tokens: maxTokens,
+            stream: false,
+          }),
+        });
+
+        if (!fallbackResponse.ok) {
+          const errBody = await fallbackResponse.text().catch(() => '');
+          throw new Error(`API Error: ${fallbackResponse.status} — ${errBody.substring(0, 200)}`);
+        }
+
+        const data = await fallbackResponse.json();
+        if (data.usage && data.usage.total_tokens) {
+          reportTokenUsage(actionName, data.usage.total_tokens);
+        }
+        return data.choices[0].message.content;
       }
 
-      const data = await fallbackResponse.json();
+      const data = await response.json();
       if (data.usage && data.usage.total_tokens) {
         reportTokenUsage(actionName, data.usage.total_tokens);
       }
       return data.choices[0].message.content;
+    } catch (error) {
+      console.error(`Groq API Error (attempt ${attempt + 1}/${retries + 1}):`, error.message);
+      if (attempt < retries) {
+        // Wait before retrying: 1s, 2s
+        await new Promise(resolve => setTimeout(resolve, (attempt + 1) * 1000));
+        continue;
+      }
+      throw error;
     }
-
-    const data = await response.json();
-    if (data.usage && data.usage.total_tokens) {
-      reportTokenUsage(actionName, data.usage.total_tokens);
-    }
-    return data.choices[0].message.content;
-  } catch (error) {
-    console.error('Groq API Error:', error);
-    throw error;
   }
 }
 
@@ -215,7 +222,7 @@ Return JSON array: [{ "question": "text", "options": { "A": "option1", "B": "opt
     },
   ];
 
-  const result = await callGroqAPI(messages, 0.7, 2048);
+  const result = await callGroqAPI(messages, 0.7, 4096, 'MCQ Generation');
   return parseJSON(result) || [];
 }
 

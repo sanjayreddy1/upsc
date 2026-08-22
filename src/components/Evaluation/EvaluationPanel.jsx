@@ -36,12 +36,15 @@ export default function EvaluationPanel({ evaluation, onClose }) {
   const { type = 'essay', finalScore, percentage, algorithmicScores, aiEvaluation } = evaluation;
   const isMCQ = type === 'mcq';
   const displayPercentage = isMCQ ? (percentage ?? evaluation.score ?? 0) : (finalScore ?? evaluation.score ?? 0);
-  const maxScore = isMCQ ? (evaluation.totalQuestions || evaluation.total || 0) * 2 : (evaluation.maxMarks || evaluation.total || 20);
+  const totalQ = evaluation.totalQuestions || evaluation.total || 0;
+  const maxScore = isMCQ ? totalQ * 2 : (evaluation.maxMarks || evaluation.total || 20);
+  const correctCount = evaluation.correct || 0;
+  const incorrectCount = evaluation.incorrect || 0;
+  const unansweredCount = evaluation.unanswered || 0;
   
   let calculatedScore = 0;
   if (isMCQ) {
-    calculatedScore = evaluation.rawScore !== undefined ? evaluation.rawScore : ((evaluation.correct || 0) * 2 - (evaluation.incorrect || 0) * 0.66);
-    // Format to 2 decimal places if needed
+    calculatedScore = evaluation.rawScore !== undefined ? evaluation.rawScore : (correctCount * 2 - incorrectCount * 0.66);
     calculatedScore = Math.round(calculatedScore * 100) / 100;
   } else {
     calculatedScore = Math.round((displayPercentage / 100) * maxScore);
@@ -122,27 +125,27 @@ export default function EvaluationPanel({ evaluation, onClose }) {
               <>
                 <div className="score-item">
                   <span className="score-label">Correct Answers (+2)</span>
-                  <span className="score-value success-text">{evaluation.correct}</span>
+                  <span className="score-value success-text">{correctCount}</span>
                 </div>
                 <div className="score-item">
                   <span className="score-label">Incorrect Answers</span>
-                  <span className="score-value danger-text">{evaluation.incorrect}</span>
+                  <span className="score-value danger-text">{incorrectCount}</span>
                 </div>
                 <div className="score-item">
                   <span className="score-label">Negative Marks Applied</span>
-                  <span className="score-value danger-text">-{Math.abs(evaluation.incorrect * 0.66).toFixed(2)}</span>
+                  <span className="score-value danger-text">-{(incorrectCount * 0.66).toFixed(2)}</span>
                 </div>
                 <div className="score-item">
                   <span className="score-label">Unanswered</span>
-                  <span className="score-value muted-text">{evaluation.unanswered}</span>
+                  <span className="score-value muted-text">{unansweredCount}</span>
                 </div>
                 <div className="score-item">
                   <span className="score-label">Total Questions</span>
-                  <span className="score-value">{evaluation.totalQuestions}</span>
+                  <span className="score-value">{totalQ}</span>
                 </div>
                 <div className="score-item">
                   <span className="score-label">Accuracy Rate</span>
-                  <span className="score-value">{evaluation.totalQuestions > 0 ? Math.round((evaluation.correct / evaluation.totalQuestions) * 100) : 0}%</span>
+                  <span className="score-value">{totalQ > 0 ? Math.round((correctCount / totalQ) * 100) : 0}%</span>
                 </div>
               </>
             ) : (
@@ -339,7 +342,7 @@ export default function EvaluationPanel({ evaluation, onClose }) {
         <div className="eval-footer">
           {isMCQ ? (
             <p className="eval-word-count">
-              Negative Penalty Applied: <strong>-{Math.abs(evaluation.incorrect * 0.66).toFixed(2)} marks</strong>
+              Negative Penalty Applied: <strong>-{(incorrectCount * 0.66).toFixed(2)} marks</strong>
             </p>
           ) : (
             <p className="eval-word-count">
