@@ -7,6 +7,7 @@ import './EvaluationPanel.css';
 
 export default function EvaluationPanel({ evaluation, onClose, isSharedView }) {
   const [isSharing, setIsSharing] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
   const evalRef = useRef(null);
   const overlayRef = useRef(null);
 
@@ -66,15 +67,14 @@ export default function EvaluationPanel({ evaluation, onClose, isSharedView }) {
     html2pdf().from(element).set(opt).save();
   };
 
-  const handleShare = async () => {
+  const generateShareLink = async () => {
+    if (shareUrl) return shareUrl;
     setIsSharing(true);
     try {
-      // 1. Save evaluation to backend to get a unique shareable link
       const res = await fetch('/api/share', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ evaluationData: evaluation })
       });
@@ -82,29 +82,38 @@ export default function EvaluationPanel({ evaluation, onClose, isSharedView }) {
       if (!res.ok) throw new Error('Failed to generate share link');
       
       const { id } = await res.json();
-      const shareUrl = `${window.location.origin}/share/${id}`;
-
-      const feedbackText = isMCQ 
-        ? `I scored ${calculatedScore}/${maxScore} on my UPSC Practice Test!\nCheck out my evaluation:`
-        : `Check out my UPSC Essay Evaluation!\nScore: ${calculatedScore}/${maxScore}`;
-
-      const shareData = {
-        title: 'My UPSC Answer Evaluation',
-        text: feedbackText,
-        url: shareUrl,
-      };
-
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(`${shareData.text}\n${shareUrl}`);
-        alert('Share link copied to clipboard!');
-      }
+      const url = `${window.location.origin}/share/${id}`;
+      setShareUrl(url);
+      return url;
     } catch (err) {
       console.warn('Error sharing', err);
       alert('Failed to share. Please try again.');
+      return null;
     } finally {
       setIsSharing(false);
+    }
+  };
+
+  const handleSharePlatform = async (platform) => {
+    const url = await generateShareLink();
+    if (!url) return;
+
+    const feedbackText = isMCQ 
+      ? `I scored ${calculatedScore}/${maxScore} on my UPSC Practice Test!\nCheck out my evaluation:`
+      : `Check out my UPSC Essay Evaluation!\nScore: ${calculatedScore}/${maxScore}`;
+      
+    const text = encodeURIComponent(feedbackText);
+    const encodedUrl = encodeURIComponent(url);
+
+    if (platform === 'whatsapp') {
+      window.open(`https://api.whatsapp.com/send?text=${text}%20${encodedUrl}`, '_blank');
+    } else if (platform === 'twitter') {
+      window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodedUrl}`, '_blank');
+    } else if (platform === 'mail') {
+      window.open(`mailto:?subject=My UPSC Answer Evaluation&body=${text}%20${encodedUrl}`);
+    } else if (platform === 'copy') {
+      await navigator.clipboard.writeText(`${feedbackText}\n${url}`);
+      alert('Share link copied to clipboard!');
     }
   };
 
@@ -112,15 +121,30 @@ export default function EvaluationPanel({ evaluation, onClose, isSharedView }) {
     <div className="evaluation-overlay animate-fade-in" ref={overlayRef}>
       {/* Action Bar floating at the top of the overlay */}
       <div className="eval-action-bar">
-        <button className="btn btn-secondary" onClick={handleDownloadPDF}>
+        <button className="btn btn-secondary" onClick={handleDownloadPDF} style={{ marginRight: 'auto' }}>
           📥 Download PDF
         </button>
+        
         {!isSharedView && (
-          <button className="btn btn-secondary" onClick={handleShare} disabled={isSharing}>
-            {isSharing ? '⌛ Generating...' : '🔗 Share'}
-          </button>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', background: 'var(--bg-dark)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', paddingLeft: '8px', paddingRight: '4px', fontWeight: '600' }}>Share:</span>
+            
+            <button className="btn btn-icon" onClick={() => handleSharePlatform('whatsapp')} title="Share to WhatsApp" disabled={isSharing} style={{ color: '#25D366', background: 'transparent' }}>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51h-.57c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            </button>
+            <button className="btn btn-icon" onClick={() => handleSharePlatform('twitter')} title="Share to X" disabled={isSharing} style={{ color: 'var(--text-primary)', background: 'transparent' }}>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </button>
+            <button className="btn btn-icon" onClick={() => handleSharePlatform('mail')} title="Share via Email" disabled={isSharing} style={{ color: 'var(--text-secondary)', background: 'transparent' }}>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+            </button>
+            <button className="btn btn-icon" onClick={() => handleSharePlatform('copy')} title="Copy Link" disabled={isSharing} style={{ color: 'var(--text-secondary)', background: 'transparent' }}>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            </button>
+          </div>
         )}
-        <button className="btn btn-icon btn-secondary" onClick={onClose}>✕</button>
+        
+        <button className="btn btn-icon btn-secondary" onClick={onClose} style={{ marginLeft: '12px' }}>✕</button>
       </div>
 
       <div className="evaluation-panel glass-card animate-scale-in" ref={evalRef}>
