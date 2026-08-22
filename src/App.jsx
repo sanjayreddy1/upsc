@@ -22,6 +22,7 @@ import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import EvaluationHistory from './components/History/EvaluationHistory';
+import SharedEvaluation from './components/Evaluation/SharedEvaluation';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { useNotification } from './hooks/useNotification';
 import { initNotificationEngine } from './services/notificationEngine';
@@ -75,7 +76,9 @@ function AppContent() {
     initNotificationEngine();
   }, []);
 
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isAuthPage = ['/login', '/register'].includes(location.pathname);
+  const isSharePage = location.pathname.startsWith('/share/');
+  const hideSidebar = isAuthPage || isSharePage;
 
   return (
     <div className="app-layout">
@@ -112,12 +115,13 @@ function AppContent() {
             <Route path="/history" element={<PrivateRoute><EvaluationHistory /></PrivateRoute>} />
             <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
             <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
+            <Route path="/share/:id" element={<SharedEvaluation />} />
           </Routes>
           </ErrorBoundary>
         </div>
       </main>
-      {!isAuthPage && <Chatbot />}
-      {!isAuthPage && <WhatsNew />}
+      {!hideSidebar && <Chatbot />}
+      {!hideSidebar && <WhatsNew />}
     </div>
   );
 }

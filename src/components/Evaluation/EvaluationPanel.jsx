@@ -1,11 +1,12 @@
-import { useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import html2pdf from 'html2pdf.js';
 import ProgressRing from '../Common/ProgressRing';
 import CountUp from '../Common/CountUp';
 import './EvaluationPanel.css';
 
-export default function EvaluationPanel({ evaluation, onClose }) {
+export default function EvaluationPanel({ evaluation, onClose, isSharedView }) {
+  const [isSharing, setIsSharing] = useState(false);
   const evalRef = useRef(null);
   const overlayRef = useRef(null);
 
@@ -66,25 +67,44 @@ export default function EvaluationPanel({ evaluation, onClose }) {
   };
 
   const handleShare = async () => {
-    const feedbackText = isMCQ 
-      ? `Correct: ${evaluation.correct}, Incorrect: ${evaluation.incorrect} (Negative marks applied)`
-      : `Feedback: ${aiEvaluation?.overallFeedback}`;
-
-    const shareData = {
-      title: 'My UPSC Answer Evaluation',
-      text: `I just scored ${displayPercentage}% (${calculatedScore}/${maxScore}) on my UPSC answer practice!\n\n${feedbackText}`,
-      url: window.location.origin + window.location.pathname + '?eval_id=' + (evaluation.id || Date.now()),
-    };
-
+    setIsSharing(true);
     try {
-      if (navigator.share) {
+      // 1. Save evaluation to backend to get a unique shareable link
+      const res = await fetch('/api/share', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        },
+        body: JSON.stringify({ evaluationData: evaluation })
+      });
+      
+      if (!res.ok) throw new Error('Failed to generate share link');
+      
+      const { id } = await res.json();
+      const shareUrl = `${window.location.origin}/share/${id}`;
+
+      const feedbackText = isMCQ 
+        ? `I scored ${calculatedScore}/${maxScore} on my UPSC Practice Test!\nCheck out my evaluation:`
+        : `Check out my UPSC Essay Evaluation!\nScore: ${calculatedScore}/${maxScore}`;
+
+      const shareData = {
+        title: 'My UPSC Answer Evaluation',
+        text: feedbackText,
+        url: shareUrl,
+      };
+
+      if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(shareData.text);
-        alert('Evaluation text copied to clipboard!');
+        await navigator.clipboard.writeText(`${shareData.text}\n${shareUrl}`);
+        alert('Share link copied to clipboard!');
       }
     } catch (err) {
       console.warn('Error sharing', err);
+      alert('Failed to share. Please try again.');
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -95,9 +115,11 @@ export default function EvaluationPanel({ evaluation, onClose }) {
         <button className="btn btn-secondary" onClick={handleDownloadPDF}>
           📥 Download PDF
         </button>
-        <button className="btn btn-secondary" onClick={handleShare}>
-          🔗 Share
-        </button>
+        {!isSharedView && (
+          <button className="btn btn-secondary" onClick={handleShare} disabled={isSharing}>
+            {isSharing ? '⌛ Generating...' : '🔗 Share'}
+          </button>
+        )}
         <button className="btn btn-icon btn-secondary" onClick={onClose}>✕</button>
       </div>
 

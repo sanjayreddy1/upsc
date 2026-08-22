@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
 const logsRoutes = require('./routes/logs');
+const shareRoutes = require('./routes/share');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -42,6 +43,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/logs', logsRoutes);
+app.use('/api/share', shareRoutes);
 
 // Serve static frontend in production (assuming root 'dist' folder when deployed via Dockerfile)
 if (process.env.NODE_ENV === 'production' || process.env.SERVE_STATIC) {
