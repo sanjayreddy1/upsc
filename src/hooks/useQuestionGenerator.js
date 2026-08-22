@@ -47,7 +47,9 @@ export function useQuestionGenerator() {
     setLoading(true);
     setError(null);
     try {
-      const questions = await generateMCQs(subject, topic, difficulty, count);
+      const globalDifficulty = localStorage.getItem('global_difficulty');
+      const finalDifficulty = globalDifficulty || difficulty;
+      const questions = await generateMCQs(subject, topic, finalDifficulty, count);
       return questions;
     } catch (err) {
       setError(err.message);

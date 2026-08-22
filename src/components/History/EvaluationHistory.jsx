@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { getEvaluationHistory, getMCQHistory } from '../../hooks/useEvaluation';
+import EvaluationPanel from '../Evaluation/EvaluationPanel';
 
 export default function EvaluationHistory() {
   const { token } = useAuth();
@@ -243,52 +244,12 @@ export default function EvaluationHistory() {
         )}
       </div>
 
-      {/* Review Modal — shows corrected MCQ questions */}
+      {/* Review Modal — uses EvaluationPanel */}
       {selectedReview && (
-        <div className="evaluation-overlay animate-fade-in" style={{ zIndex: 2000 }}>
-          <div className="eval-action-bar">
-            <h3 style={{ color: 'white', margin: 0 }}>
-              📝 Review: {selectedReview.correct}/{selectedReview.total} Correct ({selectedReview.score}%)
-            </h3>
-            <button className="btn btn-icon btn-secondary" onClick={() => setSelectedReview(null)}>✕</button>
-          </div>
-          <div style={{ padding: '80px 20px 40px', maxWidth: '800px', margin: '0 auto', maxHeight: '100vh', overflowY: 'auto' }}>
-            {selectedReview.results.map((q, idx) => (
-              <div key={idx} className="glass-card" style={{
-                padding: '20px', marginBottom: '16px',
-                borderLeft: `4px solid ${q.isCorrect ? 'var(--accent-emerald)' : 'var(--accent-rose)'}`
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: 700 }}>Q{idx + 1}</span>
-                  <span className={`badge ${q.isCorrect ? 'badge-success' : q.status === 'unanswered' ? 'badge-info' : 'badge-danger'}`}>
-                    {q.isCorrect ? '✓ Correct' : q.status === 'unanswered' ? 'Skipped' : '✗ Wrong'}
-                  </span>
-                </div>
-                <p style={{ fontWeight: 600, marginBottom: '12px' }}>{q.question}</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {Object.entries(q.options || {}).map(([key, val]) => {
-                    let bg = 'transparent';
-                    let border = '1px solid var(--border-color)';
-                    if (key === q.correct) { bg = 'rgba(67, 233, 123, 0.15)'; border = '1px solid var(--accent-emerald)'; }
-                    else if (key === q.userAnswer && key !== q.correct) { bg = 'rgba(250, 112, 154, 0.15)'; border = '1px solid var(--accent-rose)'; }
-                    return (
-                      <div key={key} style={{ padding: '8px 14px', borderRadius: '8px', background: bg, border, display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <strong>{key}.</strong> <span>{val}</span>
-                        {key === q.correct && <span style={{ marginLeft: 'auto' }}>✓</span>}
-                        {key === q.userAnswer && key !== q.correct && <span style={{ marginLeft: 'auto', color: 'var(--accent-rose)' }}>✗ Your answer</span>}
-                      </div>
-                    );
-                  })}
-                </div>
-                {q.explanation && (
-                  <div style={{ marginTop: '12px', padding: '12px', borderRadius: '8px', background: 'rgba(102, 126, 234, 0.1)' }}>
-                    <strong>💡 Explanation:</strong> {q.explanation}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+        <EvaluationPanel 
+          evaluation={{...selectedReview, rawScore: selectedReview.score}} 
+          onClose={() => setSelectedReview(null)} 
+        />
       )}
     </div>
   );

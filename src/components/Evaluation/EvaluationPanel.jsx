@@ -33,13 +33,19 @@ export default function EvaluationPanel({ evaluation, onClose }) {
 
   if (!evaluation) return null;
 
-  const { type = 'essay', finalScore, percentage, algorithmicScores, aiEvaluation } = evaluation;
-
-  // Determine score representation
+  const type = evaluation.type || 'essay';
   const isMCQ = type === 'mcq';
-  const displayPercentage = isMCQ ? percentage : finalScore;
-  const maxScore = isMCQ ? evaluation.totalQuestions * 2 : evaluation.maxMarks || 20;
-  const calculatedScore = isMCQ ? evaluation.rawScore : Math.round((displayPercentage / 100) * (evaluation.maxMarks || 20));
+  const displayPercentage = isMCQ ? (percentage ?? evaluation.score ?? 0) : (finalScore ?? evaluation.score ?? 0);
+  const maxScore = isMCQ ? (evaluation.totalQuestions || evaluation.total || 0) * 2 : (evaluation.maxMarks || evaluation.total || 20);
+  
+  let calculatedScore = 0;
+  if (isMCQ) {
+    calculatedScore = evaluation.rawScore !== undefined ? evaluation.rawScore : ((evaluation.correct || 0) * 2 - (evaluation.incorrect || 0) * 0.66);
+    // Format to 2 decimal places if needed
+    calculatedScore = Math.round(calculatedScore * 100) / 100;
+  } else {
+    calculatedScore = Math.round((displayPercentage / 100) * maxScore);
+  }
 
   const handleDownloadPDF = () => {
     const element = evalRef.current;
@@ -64,7 +70,7 @@ export default function EvaluationPanel({ evaluation, onClose }) {
     const shareData = {
       title: 'My UPSC Answer Evaluation',
       text: `I just scored ${displayPercentage}% (${calculatedScore}/${maxScore}) on my UPSC answer practice!\n\n${feedbackText}`,
-      url: window.location.href,
+      url: window.location.origin + window.location.pathname + '?eval_id=' + (evaluation.id || Date.now()),
     };
 
     try {
@@ -143,7 +149,7 @@ export default function EvaluationPanel({ evaluation, onClose }) {
               <>
                 <div className="score-item">
                   <span className="score-label">AI Evaluation</span>
-                  <span className="score-value">{aiEvaluation?.percentage || 0}%</span>
+                  <span className="score-value">{evaluation.aiEvaluation?.percentage || displayPercentage || 0}%</span>
                 </div>
               </>
             )}
@@ -233,11 +239,11 @@ export default function EvaluationPanel({ evaluation, onClose }) {
           </div>
         )}
 
-        {!isMCQ && aiEvaluation?.scores && (
+        {!isMCQ && evaluation.aiEvaluation?.scores && (
           <div className="eval-section">
             <h3>🤖 AI Evaluation Scores</h3>
             <div className="ai-scores-grid">
-              {Object.entries(aiEvaluation.scores).map(([key, value]) => (
+              {Object.entries(evaluation.aiEvaluation.scores).map(([key, value]) => (
                 <div key={key} className="ai-score-item">
                   <span className="ai-score-label">{formatLabel(key)}</span>
                   <div className="ai-score-bar">
@@ -250,80 +256,80 @@ export default function EvaluationPanel({ evaluation, onClose }) {
           </div>
         )}
 
-        {!isMCQ && aiEvaluation?.strengths?.length > 0 && (
+        {!isMCQ && evaluation.aiEvaluation?.strengths?.length > 0 && (
           <div className="eval-section">
             <h3>✅ Strengths</h3>
             <ul className="eval-list success">
-              {aiEvaluation.strengths.map((s, i) => (
+              {evaluation.aiEvaluation.strengths.map((s, i) => (
                 <li key={i}>{s}</li>
               ))}
             </ul>
           </div>
         )}
 
-        {!isMCQ && aiEvaluation?.weaknesses?.length > 0 && (
+        {!isMCQ && evaluation.aiEvaluation?.weaknesses?.length > 0 && (
           <div className="eval-section">
             <h3>⚠️ Areas to Improve</h3>
             <ul className="eval-list warning">
-              {aiEvaluation.weaknesses.map((w, i) => (
+              {evaluation.aiEvaluation.weaknesses.map((w, i) => (
                 <li key={i}>{w}</li>
               ))}
             </ul>
           </div>
         )}
 
-        {!isMCQ && aiEvaluation?.tipsAndTricks?.length > 0 && (
+        {!isMCQ && evaluation.aiEvaluation?.tipsAndTricks?.length > 0 && (
           <div className="eval-section">
             <h3>💡 Tips & Tricks</h3>
             <ul className="eval-list info">
-              {aiEvaluation.tipsAndTricks.map((t, i) => (
+              {evaluation.aiEvaluation.tipsAndTricks.map((t, i) => (
                 <li key={i}>{t}</li>
               ))}
             </ul>
           </div>
         )}
 
-        {!isMCQ && aiEvaluation?.howToImprove?.length > 0 && (
+        {!isMCQ && evaluation.aiEvaluation?.howToImprove?.length > 0 && (
           <div className="eval-section">
             <h3>📈 How to Improve</h3>
             <ol className="eval-list steps">
-              {aiEvaluation.howToImprove.map((h, i) => (
+              {evaluation.aiEvaluation.howToImprove.map((h, i) => (
                 <li key={i}>{h}</li>
               ))}
             </ol>
           </div>
         )}
 
-        {!isMCQ && aiEvaluation?.topicsToStudy?.length > 0 && (
+        {!isMCQ && evaluation.aiEvaluation?.topicsToStudy?.length > 0 && (
           <div className="eval-section">
             <h3>📖 Topics to Study</h3>
             <div className="topics-tags">
-              {aiEvaluation.topicsToStudy.map((t, i) => (
+              {evaluation.aiEvaluation.topicsToStudy.map((t, i) => (
                 <span key={i} className="badge badge-primary">{t}</span>
               ))}
             </div>
           </div>
         )}
 
-        {!isMCQ && aiEvaluation?.modelAnswerOutline && (
+        {!isMCQ && evaluation.aiEvaluation?.modelAnswerOutline && (
           <div className="eval-section">
             <h3>📋 Ideal Answer Framework</h3>
-            <p className="model-answer">{aiEvaluation.modelAnswerOutline}</p>
+            <p className="model-answer">{evaluation.aiEvaluation.modelAnswerOutline}</p>
           </div>
         )}
 
-        {!isMCQ && aiEvaluation?.overallFeedback && (
+        {!isMCQ && evaluation.aiEvaluation?.overallFeedback && (
           <div className="eval-section">
             <h3>💬 Overall Feedback</h3>
-            <p className="overall-feedback">{aiEvaluation.overallFeedback}</p>
+            <p className="overall-feedback">{evaluation.aiEvaluation.overallFeedback}</p>
           </div>
         )}
 
-        {!isMCQ && aiEvaluation?.additionalSuggestions?.length > 0 && (
+        {!isMCQ && evaluation.aiEvaluation?.additionalSuggestions?.length > 0 && (
           <div className="eval-section">
             <h3>🎯 Additional Suggestions</h3>
             <ul className="eval-list info">
-              {aiEvaluation.additionalSuggestions.map((s, i) => (
+              {evaluation.aiEvaluation.additionalSuggestions.map((s, i) => (
                 <li key={i}>{s}</li>
               ))}
             </ul>

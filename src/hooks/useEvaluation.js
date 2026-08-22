@@ -62,7 +62,7 @@ export function useEvaluation() {
       test_type: 'mcq',
       score: result.rawScore,
       total: result.totalQuestions,
-      details: { percentage: result.percentage, correct: result.correct, incorrect: result.incorrect }
+      details: { percentage: result.percentage, correct: result.correct, incorrect: result.incorrect, results: result.results }
     });
 
     if (!isSaved) {
@@ -149,11 +149,12 @@ export function useEvaluation() {
       }
     });
 
-    const totalMarks = questions.length;
-    const rawScore = correct - incorrect * (1 / 3);
+    const totalMarks = questions.length * 2;
+    const rawScore = correct * 2 - incorrect * 0.66;
     const percentage = Math.round((Math.max(0, rawScore) / totalMarks) * 100);
 
     const resultEvaluation = {
+      type: 'mcq',
       correct,
       incorrect,
       unanswered,
