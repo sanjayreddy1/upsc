@@ -32,8 +32,8 @@ export default function CurrentAffairs() {
     setUserAnswers((prev) => ({ ...prev, [index]: option }));
   };
 
-  const handleSubmit = () => {
-    const result = evaluateMCQ(userAnswers, questions);
+  const handleSubmit = async () => {
+    const result = await evaluateMCQ(userAnswers, questions);
     setMcqResult(result);
     setSubmitted(true);
   };

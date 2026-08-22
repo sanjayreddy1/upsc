@@ -26,6 +26,7 @@ import { AuthProvider, useAuth } from './hooks/useAuth';
 import { useNotification } from './hooks/useNotification';
 import { initNotificationEngine } from './services/notificationEngine';
 import ErrorBoundary from './components/Common/ErrorBoundary';
+import WhatsNew from './components/Common/WhatsNew';
 import './App.css';
 
 const PAGE_TITLES = {
@@ -116,6 +117,7 @@ function AppContent() {
         </div>
       </main>
       {!isAuthPage && <Chatbot />}
+      {!isAuthPage && <WhatsNew />}
     </div>
   );
 }

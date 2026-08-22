@@ -258,12 +258,22 @@ export default function EvaluationHistory() {
       </div>
 
       {/* Review Modal — uses EvaluationPanel */}
-      {selectedReview && (
-        <EvaluationPanel 
-          evaluation={{...selectedReview, rawScore: selectedReview.score}} 
-          onClose={() => setSelectedReview(null)} 
-        />
-      )}
+      {selectedReview && (() => {
+        const c = selectedReview.correct || 0;
+        const w = selectedReview.incorrect || 0;
+        const computedRawScore = Math.round((c * 2 - w * 0.66) * 100) / 100;
+        return (
+          <EvaluationPanel 
+            evaluation={{
+              ...selectedReview, 
+              percentage: selectedReview.score,
+              rawScore: computedRawScore,
+              totalQuestions: selectedReview.total || 0,
+            }} 
+            onClose={() => setSelectedReview(null)} 
+          />
+        );
+      })()}
     </div>
   );
 }

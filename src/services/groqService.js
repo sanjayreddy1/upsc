@@ -222,7 +222,10 @@ Return JSON array: [{ "question": "text", "options": { "A": "option1", "B": "opt
     },
   ];
 
-  const result = await callGroqAPI(messages, 0.7, 4096, 'MCQ Generation');
+  // Dynamically scale tokens: ~400 tokens per question (question + 4 options + explanation)
+  const dynamicTokens = Math.min(16384, Math.max(2048, count * 400));
+
+  const result = await callGroqAPI(messages, 0.7, dynamicTokens, 'MCQ Generation');
   return parseJSON(result) || [];
 }
 
@@ -306,7 +309,8 @@ Return JSON array: [{ "question": "text", "options": { "A": "opt1", "B": "opt2",
     },
   ];
 
-  const result = await callGroqAPI(messages, 0.6, 2048);
+  const dynamicTokens = Math.min(16384, Math.max(2048, count * 400));
+  const result = await callGroqAPI(messages, 0.6, dynamicTokens, 'Current Affairs MCQ');
   return parseJSON(result) || [];
 }
 

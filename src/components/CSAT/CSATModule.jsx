@@ -39,9 +39,9 @@ export default function CSATModule() {
     setUserAnswers((prev) => ({ ...prev, [index]: option }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!questionData?.questions) return;
-    const result = evaluateMCQ(userAnswers, questionData.questions);
+    const result = await evaluateMCQ(userAnswers, questionData.questions);
     setMcqResult(result);
     setSubmitted(true);
   };
