@@ -6,8 +6,8 @@ const router = express.Router();
 
 // @route   POST /api/share
 // @desc    Create a new shared evaluation link
-// @access  Private
-router.post('/', auth, async (req, res) => {
+// @access  Public
+router.post('/', async (req, res) => {
   try {
     const { evaluationData } = req.body;
     

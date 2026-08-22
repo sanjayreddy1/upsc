@@ -94,7 +94,7 @@ export default function EvaluationPanel({ evaluation, onClose, isSharedView }) {
         url: shareUrl,
       };
 
-      if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
+      if (navigator.share) {
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(`${shareData.text}\n${shareUrl}`);
