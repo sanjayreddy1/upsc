@@ -49,17 +49,26 @@ export default function EvaluationHistory() {
 
     // Cloud evaluations
     cloudHistory.forEach(e => {
+      let details = e.details || {};
+      if (typeof details === 'string') {
+        try {
+          details = JSON.parse(details);
+        } catch (err) {
+          details = {};
+        }
+      }
+
       items.push({
         id: `cloud-${e.id}`,
         type: e.test_type,
-        score: e.test_type === 'mcq' ? (e.details?.percentage || e.score) : e.score,
+        score: e.test_type === 'mcq' ? (details.percentage ?? e.score) : e.score,
         total: e.total,
-        correct: e.details?.correct,
-        incorrect: e.details?.incorrect,
+        correct: details.correct,
+        incorrect: details.incorrect,
         date: e.created_at,
-        question: e.details?.question,
-        paper: e.details?.paper,
-        results: e.details?.results || [],
+        question: details.question,
+        paper: details.paper,
+        results: details.results || [],
         source: 'cloud',
       });
     });
