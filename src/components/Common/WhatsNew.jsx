@@ -43,9 +43,6 @@ export default function WhatsNew() {
   return (
     <div className="whats-new-overlay" onClick={handleClose}>
       <div className="whats-new-panel animate-scale-in" onClick={(e) => e.stopPropagation()}>
-        <button className="whats-new-close" onClick={handleClose} aria-label="Close">
-          ✕
-        </button>
 
         <div className="whats-new-header">
           <span className="whats-new-badge">v{current.version}</span>
