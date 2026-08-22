@@ -31,6 +31,7 @@ export default function Sidebar({ isOpen, onToggle }) {
   const filteredNavItems = user && user.role === 'admin' 
     ? [
         { path: '/admin', label: 'Admin Panel', icon: '👑', description: 'System Overview' },
+        { path: '/admin#whatsnew', label: "What's New", icon: '📢', description: 'Update Changelog' },
         { path: '/settings', label: 'Settings', icon: '⚙️', description: 'App Preferences' }
       ]
     : NAV_ITEMS;

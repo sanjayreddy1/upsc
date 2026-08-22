@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import EvaluationPanel from '../Evaluation/EvaluationPanel';
 
 export default function AdminDashboard() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   
-  const [activeTab, setActiveTab] = useState('users');
+  const initialTab = location.hash ? location.hash.replace('#', '') : 'users';
+  const [activeTab, setActiveTab] = useState(initialTab);
+  
+  useEffect(() => {
+    if (location.hash) {
+      setActiveTab(location.hash.replace('#', ''));
+    }
+  }, [location.hash]);
   
   const [users, setUsers] = useState([]);
   const [tokens, setTokens] = useState([]);
