@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import EvaluationPanel from '../Evaluation/EvaluationPanel';
 
 export default function AdminDashboard() {
   const { user, token } = useAuth();
@@ -13,6 +14,8 @@ export default function AdminDashboard() {
   const [evaluations, setEvaluations] = useState([]);
   const [activity, setActivity] = useState([]);
   
+  const [selectedReview, setSelectedReview] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -176,16 +179,16 @@ export default function AdminDashboard() {
                 <th style={{ padding: '15px' }}>ID</th>
                 <th style={{ padding: '15px' }}>User</th>
                 <th style={{ padding: '15px' }}>Type</th>
-                <th style={{ padding: '15px' }}>Score</th>
-                <th style={{ padding: '15px' }}>Details</th>
-                <th style={{ padding: '15px' }}>Date</th>
+                <th style={{ padding: '15px', textAlign: 'left', color: 'var(--text-muted)' }}>Score</th>
+                <th style={{ padding: '15px', textAlign: 'left', color: 'var(--text-muted)' }}>Details</th>
+                <th style={{ padding: '15px', textAlign: 'left', color: 'var(--text-muted)' }}>Date</th>
+                <th style={{ padding: '15px', textAlign: 'left', color: 'var(--text-muted)' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {evaluations.map(e => {
-                let details;
-                try { details = typeof e.details === 'string' ? JSON.parse(e.details) : e.details; } catch { details = {}; }
-                const percentage = e.test_type === 'mcq' ? (details?.percentage || Math.round((e.score / e.total) * 100)) : e.score;
+                const details = typeof e.details === 'string' ? JSON.parse(e.details || '{}') : (e.details || {});
+                const percentage = e.test_type === 'mcq' ? (details.percentage || 0) : e.score;
 
                 return (
                   <tr key={e.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -234,12 +237,25 @@ export default function AdminDashboard() {
                         hour: '2-digit', minute: '2-digit'
                       })}
                     </td>
+                    <td style={{ padding: '15px' }}>
+                      <button 
+                        className="btn btn-outline btn-sm"
+                        onClick={() => setSelectedReview({
+                          ...e,
+                          ...details,
+                          type: e.test_type,
+                          score: percentage
+                        })}
+                      >
+                        📖 Review
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
               {evaluations.length === 0 && (
                 <tr>
-                  <td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No evaluations recorded yet</td>
+                  <td colSpan="7" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No evaluations recorded yet</td>
                 </tr>
               )}
             </tbody>
@@ -339,6 +355,33 @@ export default function AdminDashboard() {
           </table>
         )}
       </div>
+
+      {/* Review Modal */}
+      {selectedReview && (() => {
+        if (selectedReview.type === 'mcq') {
+          const c = selectedReview.correct || 0;
+          const w = selectedReview.incorrect || 0;
+          const computedRawScore = Math.round((c * 2 - w * 0.66) * 100) / 100;
+          return (
+            <EvaluationPanel 
+              evaluation={{
+                ...selectedReview,
+                percentage: selectedReview.score,
+                rawScore: computedRawScore,
+                totalQuestions: selectedReview.total || 0,
+              }} 
+              onClose={() => setSelectedReview(null)} 
+            />
+          );
+        } else {
+          return (
+            <EvaluationPanel 
+              evaluation={{...selectedReview, percentage: selectedReview.score}} 
+              onClose={() => setSelectedReview(null)} 
+            />
+          );
+        }
+      })()}
     </div>
   );
 }

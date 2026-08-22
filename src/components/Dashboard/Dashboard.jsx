@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ProgressRing from '../Common/ProgressRing';
 import FlashCard from '../Common/FlashCard';
 import Clock from '../Common/Clock';
+import EvaluationPanel from '../Evaluation/EvaluationPanel';
 import { getEvaluationHistory, getMCQHistory } from '../../hooks/useEvaluation';
 import { useStreak } from '../../hooks/useStreak';
 import { ALL_SOCIOLOGY_FLASHCARDS } from '../../data/sociologyTopics';
@@ -240,13 +241,14 @@ export default function Dashboard() {
           ) : (
             <>
               {essayHistory.slice(0, 5).map((h, i) => (
-                <div key={`essay-${i}`} className="history-item">
+                <div key={`essay-${i}`} className="history-item" onClick={() => setSelectedReview(h)} style={{ cursor: 'pointer' }}>
                   <span className="history-icon">📝</span>
                   <div className="history-details">
                     <span className="history-title">Essay Evaluation</span>
                     <span className="history-date">{new Date(h.date).toLocaleDateString()}</span>
                   </div>
                   <span className="badge badge-success">{h.score}%</span>
+                  <span style={{ marginLeft: '8px', opacity: 0.6 }}>▶</span>
                 </div>
               ))}
               {mcqHistory.slice(0, 5).map((h, i) => (
@@ -268,48 +270,33 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Review Modal — shows corrected questions when a history item is clicked */}
-      {selectedReview && (
-        <div className="evaluation-overlay animate-fade-in" style={{ zIndex: 2000 }}>
-          <div className="eval-action-bar">
-            <h3 style={{ color: 'white', margin: 0 }}>📝 Review: {selectedReview.correct}/{selectedReview.total} Correct ({selectedReview.score}%)</h3>
-            <button className="btn btn-icon btn-secondary" onClick={() => setSelectedReview(null)}>✕</button>
-          </div>
-          <div style={{ padding: '80px 20px 40px', maxWidth: '800px', margin: '0 auto', maxHeight: '100vh', overflowY: 'auto' }}>
-            {selectedReview.results.map((q, idx) => (
-              <div key={idx} className="glass-card" style={{ padding: '20px', marginBottom: '16px', borderLeft: `4px solid ${q.isCorrect ? 'var(--accent-emerald)' : 'var(--accent-rose)'}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: 700 }}>Q{idx + 1}</span>
-                  <span className={`badge ${q.isCorrect ? 'badge-success' : q.status === 'unanswered' ? 'badge-info' : 'badge-danger'}`}>
-                    {q.isCorrect ? '✓ Correct' : q.status === 'unanswered' ? 'Skipped' : '✗ Wrong'}
-                  </span>
-                </div>
-                <p style={{ fontWeight: 600, marginBottom: '12px' }}>{q.question}</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {Object.entries(q.options || {}).map(([key, val]) => {
-                    let bg = 'transparent';
-                    let border = '1px solid var(--border-color)';
-                    if (key === q.correct) { bg = 'rgba(67, 233, 123, 0.15)'; border = '1px solid var(--accent-emerald)'; }
-                    else if (key === q.userAnswer && key !== q.correct) { bg = 'rgba(250, 112, 154, 0.15)'; border = '1px solid var(--accent-rose)'; }
-                    return (
-                      <div key={key} style={{ padding: '8px 14px', borderRadius: '8px', background: bg, border, display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <strong>{key}.</strong> <span>{val}</span>
-                        {key === q.correct && <span style={{ marginLeft: 'auto' }}>✓</span>}
-                        {key === q.userAnswer && key !== q.correct && <span style={{ marginLeft: 'auto', color: 'var(--accent-rose)' }}>✗ Your answer</span>}
-                      </div>
-                    );
-                  })}
-                </div>
-                {q.explanation && (
-                  <div style={{ marginTop: '12px', padding: '12px', borderRadius: '8px', background: 'rgba(102, 126, 234, 0.1)' }}>
-                    <strong>💡 Explanation:</strong> {q.explanation}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Review Modal — uses EvaluationPanel */}
+      {selectedReview && (() => {
+        if (selectedReview.type === 'mcq' || selectedReview.results) {
+          const c = selectedReview.correct || 0;
+          const w = selectedReview.incorrect || 0;
+          const computedRawScore = Math.round((c * 2 - w * 0.66) * 100) / 100;
+          return (
+            <EvaluationPanel 
+              evaluation={{
+                ...selectedReview, 
+                type: 'mcq',
+                percentage: selectedReview.score,
+                rawScore: computedRawScore,
+                totalQuestions: selectedReview.total || 0,
+              }} 
+              onClose={() => setSelectedReview(null)} 
+            />
+          );
+        } else {
+          return (
+            <EvaluationPanel 
+              evaluation={{...selectedReview, type: 'essay', percentage: selectedReview.score}} 
+              onClose={() => setSelectedReview(null)} 
+            />
+          );
+        }
+      })()}
     </div>
   );
 }
