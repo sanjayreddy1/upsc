@@ -50,9 +50,7 @@ export default function WhatsNew() {
         <div className="whats-new-header">
           <span className="whats-new-badge">v{current.version}</span>
           <h2>{current.title}</h2>
-          <span className="whats-new-date">
-            {current.date} {current.role && <span style={{ opacity: 0.8 }}>• Updated by {current.role}</span>}
-          </span>
+          <span className="whats-new-date">{current.date}</span>
         </div>
 
         <ul className="whats-new-list">
@@ -66,6 +64,12 @@ export default function WhatsNew() {
         <button className="btn btn-primary whats-new-got-it" onClick={handleClose}>
           Got it!
         </button>
+        
+        {current.role && (
+          <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Developed and Updated by <strong>{current.role}</strong>
+          </div>
+        )}
       </div>
     </div>
   );
