@@ -5,6 +5,23 @@ const { logActivity } = require('../helpers/activityLogger');
 
 const router = express.Router();
 
+// @route   GET /api/user/whatsnew
+// @desc    Get the latest What's New configuration
+// @access  Public
+router.get('/whatsnew', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT value FROM SystemSettings WHERE key = $1', ['whatsnew_config']);
+    if (result.rows.length > 0) {
+      res.json(JSON.parse(result.rows[0].value));
+    } else {
+      res.json(null);
+    }
+  } catch (err) {
+    console.error('Error fetching whatsnew:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 // @route   POST /api/user/evaluations
 // @desc    Save an evaluation metric for the logged-in user
 router.post('/evaluations', auth, async (req, res) => {

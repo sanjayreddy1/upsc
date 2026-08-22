@@ -6,6 +6,26 @@ const { logActivity } = require('../helpers/activityLogger');
 
 const router = express.Router();
 
+// @route   POST /api/admin/whatsnew
+// @desc    Update the What's New configuration
+// @access  Admin
+router.post('/whatsnew', auth, isAdmin, async (req, res) => {
+  try {
+    const config = req.body;
+    await pool.query(`
+      INSERT INTO SystemSettings (key, value)
+      VALUES ($1, $2)
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP
+    `, ['whatsnew_config', JSON.stringify(config)]);
+    
+    logActivity({ userId: req.user.id, action: 'UPDATE_WHATSNEW', detail: `Version: ${config.version}`, ip: req.ip });
+    res.json({ message: "What's New updated successfully" });
+  } catch (err) {
+    console.error('Error updating whatsnew:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 // @route   GET /api/admin/users
 // @desc    Get all users and their basic evaluation metrics
 router.get('/users', auth, isAdmin, async (req, res) => {

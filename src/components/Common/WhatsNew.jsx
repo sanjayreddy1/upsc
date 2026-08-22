@@ -1,46 +1,44 @@
 import { useState, useEffect } from 'react';
 import './WhatsNew.css';
 
-// ── Update this for each deployment ──────────────────────────────────
-const CURRENT_VERSION = '2.4.0';
-const CHANGELOG = [
-  {
-    version: '2.4.0',
-    date: '22 Aug 2026',
-    title: "What's New 🎉",
-    changes: [
-      '✅ Fixed MCQ evaluation — scores now display correctly on first try',
-      '✅ Accurate marks display (e.g., 12.68/20 instead of percentage)',
-      '📊 History page now opens full evaluation with question review',
-      '⚡ Faster & more reliable question generation (auto-retry on failure)',
-      '🎯 Dynamic token scaling — generates 10-250 questions without truncation',
-      '⚙️ Settings difficulty now applies globally to all question generators',
-      '🛡️ App no longer crashes on errors — shows recovery UI instead',
-      '🔗 Share button creates unique evaluation links',
-    ],
-  },
-];
+
 
 export default function WhatsNew() {
   const [visible, setVisible] = useState(false);
+  const [config, setConfig] = useState(null);
 
   useEffect(() => {
-    const lastSeen = localStorage.getItem('whats_new_version');
-    if (lastSeen !== CURRENT_VERSION) {
-      // Show after a small delay so the page loads first
-      const timer = setTimeout(() => setVisible(true), 1500);
-      return () => clearTimeout(timer);
-    }
+    const fetchConfig = async () => {
+      try {
+        const res = await fetch('/api/user/whatsnew');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.version) {
+            const lastSeen = localStorage.getItem('whats_new_version');
+            if (lastSeen !== data.version) {
+              setConfig(data);
+              const timer = setTimeout(() => setVisible(true), 1500);
+              return () => clearTimeout(timer);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch whatsnew config', err);
+      }
+    };
+    fetchConfig();
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem('whats_new_version', CURRENT_VERSION);
+    if (config?.version) {
+      localStorage.setItem('whats_new_version', config.version);
+    }
     setVisible(false);
   };
 
-  if (!visible) return null;
+  if (!visible || !config) return null;
 
-  const current = CHANGELOG[0];
+  const current = config;
 
   return (
     <div className="whats-new-overlay" onClick={handleClose}>

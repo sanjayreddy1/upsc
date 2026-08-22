@@ -15,6 +15,11 @@ export default function AdminDashboard() {
   const [activity, setActivity] = useState([]);
   
   const [selectedReview, setSelectedReview] = useState(null);
+  
+  // What's New form state
+  const [whatsNew, setWhatsNew] = useState({ version: '', date: '', title: '', changes: [''] });
+  const [whatsNewLoading, setWhatsNewLoading] = useState(false);
+  const [whatsNewMessage, setWhatsNewMessage] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,11 +35,12 @@ export default function AdminDashboard() {
         setLoading(true);
         const headers = { 'Authorization': `Bearer ${token}` };
         
-        const [usersRes, tokensRes, evalsRes, activityRes] = await Promise.all([
+        const [usersRes, tokensRes, evalsRes, activityRes, whatsNewRes] = await Promise.all([
           fetch('/api/admin/users', { headers }),
           fetch('/api/admin/tokens', { headers }),
           fetch('/api/admin/evaluations', { headers }),
-          fetch('/api/admin/activity', { headers })
+          fetch('/api/admin/activity', { headers }),
+          fetch('/api/user/whatsnew') // public route
         ]);
 
         if (!usersRes.ok) {
@@ -46,6 +52,11 @@ export default function AdminDashboard() {
         const tokensData = tokensRes.ok ? await tokensRes.json() : [];
         const evalsData = evalsRes.ok ? await evalsRes.json() : [];
         const activityData = activityRes.ok ? await activityRes.json() : [];
+        const whatsNewData = whatsNewRes.ok ? await whatsNewRes.json() : null;
+
+        if (whatsNewData) {
+          setWhatsNew(whatsNewData);
+        }
 
         setUsers(usersData);
         setTokens(tokensData);
@@ -60,6 +71,44 @@ export default function AdminDashboard() {
 
     fetchData();
   }, [user, token, navigate]);
+
+  const handleUpdateWhatsNew = async (e) => {
+    e.preventDefault();
+    setWhatsNewLoading(true);
+    setWhatsNewMessage('');
+    try {
+      const res = await fetch('/api/admin/whatsnew', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(whatsNew)
+      });
+      if (!res.ok) throw new Error('Failed to update Whats New');
+      setWhatsNewMessage('✅ Broadcasted successfully to all users!');
+      setTimeout(() => setWhatsNewMessage(''), 3000);
+    } catch (err) {
+      setWhatsNewMessage(`❌ Error: ${err.message}`);
+    } finally {
+      setWhatsNewLoading(false);
+    }
+  };
+
+  const handleWhatsNewChangeChange = (index, value) => {
+    const newChanges = [...whatsNew.changes];
+    newChanges[index] = value;
+    setWhatsNew({ ...whatsNew, changes: newChanges });
+  };
+
+  const addWhatsNewChange = () => {
+    setWhatsNew({ ...whatsNew, changes: [...whatsNew.changes, ''] });
+  };
+
+  const removeWhatsNewChange = (index) => {
+    const newChanges = whatsNew.changes.filter((_, i) => i !== index);
+    setWhatsNew({ ...whatsNew, changes: newChanges });
+  };
 
   if (loading) return <div className="flex-center" style={{ height: '50vh' }}>Loading Admin Panel...</div>;
 
@@ -126,6 +175,12 @@ export default function AdminDashboard() {
           onClick={() => setActiveTab('activity')}
         >
           Activity Logs
+        </button>
+        <button 
+          className={`btn ${activeTab === 'whatsnew' ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => setActiveTab('whatsnew')}
+        >
+          📢 What's New
         </button>
       </div>
 
@@ -353,6 +408,85 @@ export default function AdminDashboard() {
               )}
             </tbody>
           </table>
+        )}
+
+        {/* What's New Tab */}
+        {activeTab === 'whatsnew' && (
+          <div style={{ padding: '24px', maxWidth: '600px' }}>
+            <h3 style={{ marginBottom: '16px' }}>Update "What's New" Popup</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.9rem' }}>
+              Updating this form will broadcast the new changelog to all users immediately. They will see the popup on their next refresh.
+            </p>
+            
+            {whatsNewMessage && (
+              <div style={{ padding: '12px', marginBottom: '20px', borderRadius: '8px', background: whatsNewMessage.includes('✅') ? 'rgba(52, 211, 153, 0.2)' : 'rgba(244, 63, 94, 0.2)', color: whatsNewMessage.includes('✅') ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
+                {whatsNewMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateWhatsNew} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Version (e.g., 2.5.0)</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    value={whatsNew.version} 
+                    onChange={e => setWhatsNew({...whatsNew, version: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Date</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    value={whatsNew.date} 
+                    onChange={e => setWhatsNew({...whatsNew, date: e.target.value})}
+                    placeholder="e.g. 25 Aug 2026"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Title</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  value={whatsNew.title} 
+                  onChange={e => setWhatsNew({...whatsNew, title: e.target.value})}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Changes (Bullet Points)</label>
+                {whatsNew.changes.map((change, index) => (
+                  <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                    <input 
+                      type="text" 
+                      className="input-field" 
+                      value={change} 
+                      onChange={e => handleWhatsNewChangeChange(index, e.target.value)}
+                      placeholder="e.g. ✅ Fixed a bug in evaluation"
+                      required
+                    />
+                    <button type="button" className="btn btn-outline" style={{ padding: '0 12px' }} onClick={() => removeWhatsNewChange(index)}>✕</button>
+                  </div>
+                ))}
+                <button type="button" className="btn btn-outline btn-sm" onClick={addWhatsNewChange} style={{ marginTop: '8px' }}>
+                  + Add Point
+                </button>
+              </div>
+
+              <div style={{ marginTop: '16px' }}>
+                <button type="submit" className="btn btn-primary" disabled={whatsNewLoading}>
+                  {whatsNewLoading ? 'Broadcasting...' : '📢 Broadcast Update to All Users'}
+                </button>
+              </div>
+            </form>
+          </div>
         )}
       </div>
 
