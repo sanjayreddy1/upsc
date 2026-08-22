@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useQuestionGenerator } from '../../hooks/useQuestionGenerator';
 import { useEvaluation } from '../../hooks/useEvaluation';
 import { useStreak } from '../../hooks/useStreak';
+import { useAuth } from '../../hooks/useAuth';
 import MCQCard from '../Common/MCQCard';
 import EvaluationPanel from '../Evaluation/EvaluationPanel';
 import './DailyTest.css';
@@ -14,6 +15,7 @@ export default function DailyTest() {
   const [difficulty, setDifficulty] = useState('easy');
   const resultRef = useRef(null);
 
+  const { user } = useAuth();
   const { loading, error, getMCQs } = useQuestionGenerator();
   const { evaluateMCQ } = useEvaluation();
   const { markDailyTestComplete, completedToday } = useStreak();
@@ -137,8 +139,17 @@ export default function DailyTest() {
         </div>
       )}
 
-      {questions.length > 0 && (
-        <div className="daily-questions">
+      {user && completedToday ? (
+        <div className="glass-card" style={{ padding: '40px', textAlign: 'center', marginTop: '30px' }}>
+          <h2 style={{ fontSize: '2rem', marginBottom: '15px' }}>🎉 Great Job!</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
+            You have already completed your Daily Challenge today. Come back tomorrow for a new set of questions to maintain your streak!
+          </p>
+        </div>
+      ) : (
+        <>
+          {questions.length > 0 && (
+            <div className="daily-questions">
           {questions.map((q, idx) => (
             <MCQCard
               key={idx}
@@ -167,6 +178,8 @@ export default function DailyTest() {
           )}
         </div>
       )}
+      </>
+    )}
 
       {submitted && mcqResult && (
         <EvaluationPanel 

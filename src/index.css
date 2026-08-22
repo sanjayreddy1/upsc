@@ -442,3 +442,8 @@ body {
   }
 }
 .pyq-inline-tag { color: var(--accent-emerald); font-weight: 700; font-size: 0.9em; }
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}

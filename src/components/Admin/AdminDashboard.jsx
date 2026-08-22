@@ -195,181 +195,188 @@ export default function AdminDashboard() {
       <div className="glass-card" style={{ overflowX: 'auto' }}>
         {/* Users Tab */}
         {activeTab === 'users' && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                <th style={{ padding: '15px' }}>ID</th>
-                <th style={{ padding: '15px' }}>Name</th>
-                <th style={{ padding: '15px' }}>Email</th>
-                <th style={{ padding: '15px' }}>Role</th>
-                <th style={{ padding: '15px' }}>Joined At</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map(u => (
-                <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '15px' }}>{u.id}</td>
-                  <td style={{ padding: '15px', fontWeight: 500 }}>{u.name}</td>
-                  <td style={{ padding: '15px', color: 'var(--text-secondary)' }}>{u.email}</td>
-                  <td style={{ padding: '15px' }}>
-                    <span style={{ 
-                      padding: '4px 8px', 
-                      borderRadius: '4px', 
-                      fontSize: '0.8rem',
-                      background: u.role === 'admin' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(56, 189, 248, 0.2)',
-                      color: u.role === 'admin' ? 'var(--accent-violet)' : 'var(--accent-blue)'
-                    }}>
-                      {u.role.toUpperCase()}
-                    </span>
-                  </td>
-                  <td style={{ padding: '15px' }}>{new Date(u.created_at).toLocaleString()}</td>
+          <div className="table-responsive">
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                  <th style={{ padding: '15px' }}>ID</th>
+                  <th style={{ padding: '15px' }}>Name</th>
+                  <th style={{ padding: '15px' }}>Email</th>
+                  <th style={{ padding: '15px' }}>Role</th>
+                  <th style={{ padding: '15px' }}>Joined At</th>
                 </tr>
-              ))}
-              {users.length === 0 && (
-                <tr>
-                  <td colSpan="5" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No users found</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {users.map(u => (
+                  <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <td style={{ padding: '15px' }}>{u.id}</td>
+                    <td style={{ padding: '15px', fontWeight: 500 }}>{u.name}</td>
+                    <td style={{ padding: '15px', color: 'var(--text-secondary)' }}>{u.email}</td>
+                    <td style={{ padding: '15px' }}>
+                      <span style={{ 
+                        padding: '4px 8px', 
+                        borderRadius: '4px', 
+                        fontSize: '0.8rem',
+                        background: u.role === 'admin' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(56, 189, 248, 0.2)',
+                        color: u.role === 'admin' ? 'var(--accent-violet)' : 'var(--accent-blue)'
+                      }}>
+                        {u.role.toUpperCase()}
+                      </span>
+                    </td>
+                    <td style={{ padding: '15px' }}>{new Date(u.created_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+                {users.length === 0 && (
+                  <tr>
+                    <td colSpan="5" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No users found</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {/* Evaluations Tab — All users' scores */}
         {activeTab === 'evaluations' && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                <th style={{ padding: '15px' }}>ID</th>
-                <th style={{ padding: '15px' }}>User</th>
-                <th style={{ padding: '15px' }}>Type</th>
-                <th style={{ padding: '15px', textAlign: 'left', color: 'var(--text-muted)' }}>Score</th>
-                <th style={{ padding: '15px', textAlign: 'left', color: 'var(--text-muted)' }}>Details</th>
-                <th style={{ padding: '15px', textAlign: 'left', color: 'var(--text-muted)' }}>Date</th>
-                <th style={{ padding: '15px', textAlign: 'left', color: 'var(--text-muted)' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {evaluations.map(e => {
-                const details = typeof e.details === 'string' ? JSON.parse(e.details || '{}') : (e.details || {});
-                const percentage = e.test_type === 'mcq' ? (details.percentage || 0) : e.score;
-
-                return (
-                  <tr key={e.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <td style={{ padding: '15px', color: 'var(--text-muted)' }}>{e.id}</td>
-                    <td style={{ padding: '15px' }}>
-                      <div style={{ fontWeight: 500 }}>{e.name}</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{e.email}</div>
-                    </td>
-                    <td style={{ padding: '15px' }}>
-                      <span style={{
-                        padding: '4px 10px',
-                        borderRadius: '6px',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        background: e.test_type === 'essay' ? 'rgba(102, 126, 234, 0.15)' : 'rgba(52, 211, 153, 0.15)',
-                        color: e.test_type === 'essay' ? 'var(--accent-blue)' : 'var(--accent-emerald)',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {e.test_type === 'essay' ? '📝 ESSAY' : '🎯 MCQ'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '15px' }}>
-                      <span style={{
-                        fontWeight: 700,
-                        fontSize: '1.1rem',
-                        color: percentage >= 70 ? 'var(--accent-emerald)' : percentage >= 40 ? 'var(--accent-amber)' : 'var(--accent-rose)'
-                      }}>
-                        {percentage}%
-                      </span>
-                      {e.test_type === 'mcq' && (
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '8px' }}>
-                          ({Math.round(e.score)}/{e.total})
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ padding: '15px', color: 'var(--text-secondary)', maxWidth: '250px', fontSize: '0.85rem' }}>
-                      {e.test_type === 'essay' ? (
-                        details?.question ? details.question.substring(0, 60) + '...' : 'Essay evaluation'
-                      ) : (
-                        `✅ ${details?.correct || 0} · ❌ ${details?.incorrect || 0}`
-                      )}
-                    </td>
-                    <td style={{ padding: '15px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
-                      {new Date(e.created_at).toLocaleString('en-IN', {
-                        day: '2-digit', month: 'short', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit'
-                      })}
-                    </td>
-                    <td style={{ padding: '15px' }}>
-                      <button 
-                        className="btn btn-outline btn-sm"
-                        onClick={() => setSelectedReview({
-                          ...e,
-                          ...details,
-                          type: e.test_type,
-                          score: percentage
-                        })}
-                      >
-                        📖 Review
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-              {evaluations.length === 0 && (
-                <tr>
-                  <td colSpan="7" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No evaluations recorded yet</td>
+          <div className="table-responsive">
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                  <th style={{ padding: '15px' }}>ID</th>
+                  <th style={{ padding: '15px' }}>User</th>
+                  <th style={{ padding: '15px' }}>Type</th>
+                  <th style={{ padding: '15px', textAlign: 'left', color: 'var(--text-muted)' }}>Score</th>
+                  <th style={{ padding: '15px', textAlign: 'left', color: 'var(--text-muted)' }}>Details</th>
+                  <th style={{ padding: '15px', textAlign: 'left', color: 'var(--text-muted)' }}>Date</th>
+                  <th style={{ padding: '15px', textAlign: 'left', color: 'var(--text-muted)' }}>Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {evaluations.map(e => {
+                  const details = typeof e.details === 'string' ? JSON.parse(e.details || '{}') : (e.details || {});
+                  const percentage = e.test_type === 'mcq' ? (details.percentage || 0) : e.score;
+
+                  return (
+                    <tr key={e.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <td style={{ padding: '15px', color: 'var(--text-muted)' }}>{e.id}</td>
+                      <td style={{ padding: '15px' }}>
+                        <div style={{ fontWeight: 500 }}>{e.name}</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{e.email}</div>
+                      </td>
+                      <td style={{ padding: '15px' }}>
+                        <span style={{
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          background: e.test_type === 'essay' ? 'rgba(102, 126, 234, 0.15)' : 'rgba(52, 211, 153, 0.15)',
+                          color: e.test_type === 'essay' ? 'var(--accent-blue)' : 'var(--accent-emerald)',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {e.test_type === 'essay' ? '📝 ESSAY' : '🎯 MCQ'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '15px' }}>
+                        <span style={{
+                          fontWeight: 700,
+                          fontSize: '1.1rem',
+                          color: percentage >= 70 ? 'var(--accent-emerald)' : percentage >= 40 ? 'var(--accent-amber)' : 'var(--accent-rose)'
+                        }}>
+                          {percentage}%
+                        </span>
+                        {e.test_type === 'mcq' && (
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '8px' }}>
+                            ({Math.round(e.score)}/{e.total})
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ padding: '15px', color: 'var(--text-secondary)', maxWidth: '250px', fontSize: '0.85rem' }}>
+                        {e.test_type === 'essay' ? (
+                          details?.question ? details.question.substring(0, 60) + '...' : 'Essay evaluation'
+                        ) : (
+                          `✅ ${details?.correct || 0} · ❌ ${details?.incorrect || 0}`
+                        )}
+                      </td>
+                      <td style={{ padding: '15px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
+                        {new Date(e.created_at).toLocaleString('en-IN', {
+                          day: '2-digit', month: 'short', year: 'numeric',
+                          hour: '2-digit', minute: '2-digit'
+                        })}
+                      </td>
+                      <td style={{ padding: '15px' }}>
+                        <button 
+                          className="btn btn-outline btn-sm"
+                          onClick={() => setSelectedReview({
+                            ...e,
+                            ...details,
+                            type: e.test_type,
+                            score: percentage
+                          })}
+                        >
+                          📖 Review
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {evaluations.length === 0 && (
+                  <tr>
+                    <td colSpan="7" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No evaluations recorded yet</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {/* Token Usage Tab */}
         {activeTab === 'tokens' && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                <th style={{ padding: '15px' }}>ID</th>
-                <th style={{ padding: '15px' }}>User Email</th>
-                <th style={{ padding: '15px' }}>Action</th>
-                <th style={{ padding: '15px' }}>Tokens Used</th>
-                <th style={{ padding: '15px' }}>Timestamp</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tokens.map(t => (
-                <tr key={t.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '15px' }}>{t.id}</td>
-                  <td style={{ padding: '15px' }}>{t.email}</td>
-                  <td style={{ padding: '15px', color: 'var(--accent-emerald)' }}>{t.action}</td>
-                  <td style={{ padding: '15px', fontWeight: 'bold' }}>{t.tokens_used.toLocaleString()}</td>
-                  <td style={{ padding: '15px', color: 'var(--text-secondary)' }}>{new Date(t.created_at).toLocaleString()}</td>
+          <div className="table-responsive">
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                  <th style={{ padding: '15px' }}>ID</th>
+                  <th style={{ padding: '15px' }}>User Email</th>
+                  <th style={{ padding: '15px' }}>Action</th>
+                  <th style={{ padding: '15px' }}>Tokens Used</th>
+                  <th style={{ padding: '15px' }}>Timestamp</th>
                 </tr>
-              ))}
-              {tokens.length === 0 && (
-                <tr>
-                  <td colSpan="5" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No token usage recorded yet</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {tokens.map(t => (
+                  <tr key={t.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <td style={{ padding: '15px' }}>{t.id}</td>
+                    <td style={{ padding: '15px' }}>{t.email}</td>
+                    <td style={{ padding: '15px', color: 'var(--accent-emerald)' }}>{t.action}</td>
+                    <td style={{ padding: '15px', fontWeight: 'bold' }}>{t.tokens_used.toLocaleString()}</td>
+                    <td style={{ padding: '15px', color: 'var(--text-secondary)' }}>{new Date(t.created_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+                {tokens.length === 0 && (
+                  <tr>
+                    <td colSpan="5" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No token usage recorded yet</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {/* Activity Logs Tab */}
         {activeTab === 'activity' && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                <th style={{ padding: '15px' }}>ID</th>
-                <th style={{ padding: '15px' }}>User</th>
-                <th style={{ padding: '15px' }}>Action</th>
-                <th style={{ padding: '15px' }}>Detail</th>
-                <th style={{ padding: '15px' }}>IP</th>
-                <th style={{ padding: '15px' }}>Timestamp</th>
-              </tr>
-            </thead>
-            <tbody>
+          <div className="table-responsive">
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                  <th style={{ padding: '15px' }}>ID</th>
+                  <th style={{ padding: '15px' }}>User</th>
+                  <th style={{ padding: '15px' }}>Action</th>
+                  <th style={{ padding: '15px' }}>Detail</th>
+                  <th style={{ padding: '15px' }}>IP</th>
+                  <th style={{ padding: '15px' }}>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody>
               {activity.map(a => {
                 const actionColors = {
                   'LOGIN_SUCCESS': { bg: 'rgba(52, 211, 153, 0.15)', color: 'var(--accent-emerald)' },
@@ -416,6 +423,7 @@ export default function AdminDashboard() {
               )}
             </tbody>
           </table>
+          </div>
         )}
 
         {/* What's New Tab */}

@@ -187,8 +187,9 @@ export default function EvaluationHistory() {
             <p>Start practicing to see your history here!</p>
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
+          <div className="table-responsive">
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                 <th style={{ padding: '15px' }}>#</th>
                 <th style={{ padding: '15px' }}>Type</th>
@@ -254,6 +255,7 @@ export default function EvaluationHistory() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
