@@ -17,8 +17,11 @@ export default function EvaluationHistory() {
       setLoading(true);
 
       // Fetch from localStorage
-      setEssayHistory(getEvaluationHistory('essay'));
-      setMcqHistory(getMCQHistory());
+      const essayH = getEvaluationHistory('essay');
+      setEssayHistory(Array.isArray(essayH) ? essayH : []);
+      
+      const mcqH = getMCQHistory();
+      setMcqHistory(Array.isArray(mcqH) ? mcqH : []);
 
       // Fetch from cloud if logged in
       if (token) {
@@ -28,7 +31,7 @@ export default function EvaluationHistory() {
           });
           if (res.ok) {
             const data = await res.json();
-            setCloudHistory(data);
+            setCloudHistory(Array.isArray(data) ? data : []);
           }
         } catch (e) {
           console.warn('Failed to fetch cloud history:', e);
@@ -49,14 +52,15 @@ export default function EvaluationHistory() {
 
     // Cloud evaluations
     cloudHistory.forEach(e => {
-      let details = e.details || {};
+      let details = e.details;
       if (typeof details === 'string') {
         try {
           details = JSON.parse(details);
         } catch (err) {
-          details = {};
+          details = null;
         }
       }
+      details = details || {};
 
       items.push({
         id: `cloud-${e.id}`,
