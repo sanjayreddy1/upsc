@@ -50,7 +50,9 @@ export default function WhatsNew() {
         <div className="whats-new-header">
           <span className="whats-new-badge">v{current.version}</span>
           <h2>{current.title}</h2>
-          <span className="whats-new-date">{current.date}</span>
+          <span className="whats-new-date">
+            {current.date} {current.role && <span style={{ opacity: 0.8 }}>• Updated by {current.role}</span>}
+          </span>
         </div>
 
         <ul className="whats-new-list">

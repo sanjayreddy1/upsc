@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   const [selectedReview, setSelectedReview] = useState(null);
   
   // What's New form state
-  const [whatsNew, setWhatsNew] = useState({ version: '', date: '', title: '', changes: [''] });
+  const [whatsNew, setWhatsNew] = useState({ version: '', role: 'Admin', date: '', title: '', changes: [''] });
   const [whatsNewLoading, setWhatsNewLoading] = useState(false);
   const [whatsNewMessage, setWhatsNewMessage] = useState('');
 
@@ -441,7 +441,7 @@ export default function AdminDashboard() {
             )}
 
             <form onSubmit={handleUpdateWhatsNew} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Version (e.g., 2.5.0)</label>
                   <input 
@@ -451,6 +451,19 @@ export default function AdminDashboard() {
                     onChange={e => setWhatsNew({...whatsNew, version: e.target.value})}
                     required
                   />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Updated By (Role)</label>
+                  <select 
+                    className="input-field" 
+                    value={whatsNew.role || 'Admin'} 
+                    onChange={e => setWhatsNew({...whatsNew, role: e.target.value})}
+                    required
+                  >
+                    <option value="Admin">Admin</option>
+                    <option value="Developer">Developer</option>
+                    <option value="Creator">Creator</option>
+                  </select>
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Date</label>
