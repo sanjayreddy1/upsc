@@ -27,18 +27,24 @@ router.post('/whatsnew', auth, isAdmin, async (req, res) => {
 });
 
 // @route   GET /api/admin/users
-// @desc    Get all users and their basic evaluation metrics
+// @desc    Get all users with their daily quiz status
 router.get('/users', auth, isAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
-        id, 
-        name, 
-        email, 
-        role, 
-        created_at
-      FROM Users
-      ORDER BY created_at DESC
+        u.id, 
+        u.name, 
+        u.email, 
+        u.role, 
+        u.created_at,
+        u.app_data,
+        COALESCE(s.completed_today, false) AS completed_today,
+        s.current_streak,
+        s.highest_streak,
+        s.last_test_date
+      FROM Users u
+      LEFT JOIN Streaks s ON u.id = s.user_id
+      ORDER BY u.created_at DESC
     `);
 
     res.json(result.rows);
@@ -47,6 +53,125 @@ router.get('/users', auth, isAdmin, async (req, res) => {
     res.status(500).json({ message: 'Server error fetching users' });
   }
 });
+
+// @route   DELETE /api/admin/users/:id
+// @desc    Delete a user and all their associated data
+// @access  Admin
+router.delete('/users/:id', auth, isAdmin, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const userId = parseInt(req.params.id);
+
+    // Prevent admin from deleting themselves
+    if (userId === req.user.id) {
+      return res.status(400).json({ message: 'You cannot delete your own account' });
+    }
+
+    await client.query('BEGIN');
+
+    // Delete from all dependent tables first
+    await client.query('DELETE FROM SavedFlashcards WHERE user_id = $1', [userId]);
+    await client.query('DELETE FROM TokenUsage WHERE user_id = $1', [userId]);
+    await client.query('DELETE FROM EvaluationMetrics WHERE user_id = $1', [userId]);
+    await client.query('DELETE FROM Streaks WHERE user_id = $1', [userId]);
+    await client.query('DELETE FROM ActivityLogs WHERE user_id = $1', [userId]);
+
+    // Check for SharedEvaluations table (may not exist)
+    try {
+      await client.query('DELETE FROM SharedEvaluations WHERE user_id = $1', [userId]);
+    } catch (_) { /* table may not exist */ }
+
+    // Finally delete the user
+    const result = await client.query('DELETE FROM Users WHERE id = $1 RETURNING id, email', [userId]);
+
+    if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    await client.query('COMMIT');
+
+    logActivity({ userId: req.user.id, action: 'ADMIN_DELETE_USER', detail: `Deleted user: ${result.rows[0].email} (ID: ${userId})`, ip: req.ip });
+
+    res.json({ message: `User ${result.rows[0].email} deleted successfully` });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ message: 'Server error deleting user' });
+  } finally {
+    client.release();
+  }
+});
+
+// @route   POST /api/admin/reset-daily-limit/:id
+// @desc    Reset a user's daily test completion status
+// @access  Admin
+router.post('/reset-daily-limit/:id', auth, isAdmin, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+
+    const result = await pool.query(
+      'UPDATE Streaks SET completed_today = FALSE WHERE user_id = $1 RETURNING user_id',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      // No streak record exists — create one with completed_today = false
+      await pool.query('INSERT INTO Streaks (user_id, completed_today) VALUES ($1, FALSE)', [userId]);
+    }
+
+    logActivity({ userId: req.user.id, action: 'ADMIN_RESET_DAILY', detail: `Reset daily limit for user ID: ${userId}`, ip: req.ip });
+
+    res.json({ message: 'Daily test limit reset successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error resetting daily limit' });
+  }
+});
+
+// @route   POST /api/admin/set-difficulty/:id
+// @desc    Set a user's difficulty level preference
+// @access  Admin
+router.post('/set-difficulty/:id', auth, isAdmin, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const { difficulty } = req.body;
+
+    if (!['easy', 'medium', 'hard'].includes(difficulty)) {
+      return res.status(400).json({ message: 'Invalid difficulty level. Must be easy, medium, or hard.' });
+    }
+
+    // Get existing app_data
+    const userResult = await pool.query('SELECT app_data FROM Users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    let appData = {};
+    try {
+      appData = JSON.parse(userResult.rows[0].app_data || '{}');
+    } catch (_) {
+      appData = {};
+    }
+
+    // Update difficulty settings
+    appData.global_difficulty = difficulty;
+    appData.daily_test_difficulty = difficulty;
+
+    await pool.query(
+      'UPDATE Users SET app_data = $1 WHERE id = $2',
+      [JSON.stringify(appData), userId]
+    );
+
+    logActivity({ userId: req.user.id, action: 'ADMIN_SET_DIFFICULTY', detail: `Set difficulty to "${difficulty}" for user ID: ${userId}`, ip: req.ip });
+
+    res.json({ message: `Difficulty set to "${difficulty}" successfully` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error setting difficulty' });
+  }
+});
+
 
 // @route   GET /api/admin/tokens
 // @desc    Get all token usage history

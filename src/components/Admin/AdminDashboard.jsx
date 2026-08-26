@@ -29,6 +29,13 @@ export default function AdminDashboard() {
   const [whatsNewLoading, setWhatsNewLoading] = useState(false);
   const [whatsNewMessage, setWhatsNewMessage] = useState('');
 
+  // User management state
+  const [passwordInputs, setPasswordInputs] = useState({}); // { [userId]: string }
+  const [showPasswordInput, setShowPasswordInput] = useState({}); // { [userId]: boolean }
+  const [deleteConfirm, setDeleteConfirm] = useState({}); // { [userId]: boolean }
+  const [actionMessages, setActionMessages] = useState({}); // { [userId]: { text, type } }
+  const [actionLoading, setActionLoading] = useState({}); // { [userId]: string } — action name
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -38,47 +45,154 @@ export default function AdminDashboard() {
       return;
     }
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const headers = { 'Authorization': `Bearer ${token}` };
-        
-        const [usersRes, tokensRes, evalsRes, activityRes, whatsNewRes] = await Promise.all([
-          fetch('/api/admin/users', { headers }),
-          fetch('/api/admin/tokens', { headers }),
-          fetch('/api/admin/evaluations', { headers }),
-          fetch('/api/admin/activity', { headers }),
-          fetch('/api/user/whatsnew') // public route
-        ]);
-
-        if (!usersRes.ok) {
-          const txt = await usersRes.text().catch(() => '');
-          throw new Error(`Failed to fetch users: ${usersRes.status} ${txt}`);
-        }
-
-        const usersData = await usersRes.json();
-        const tokensData = tokensRes.ok ? await tokensRes.json() : [];
-        const evalsData = evalsRes.ok ? await evalsRes.json() : [];
-        const activityData = activityRes.ok ? await activityRes.json() : [];
-        const whatsNewData = whatsNewRes.ok ? await whatsNewRes.json() : null;
-
-        if (whatsNewData) {
-          setWhatsNew(whatsNewData);
-        }
-
-        setUsers(usersData);
-        setTokens(tokensData);
-        setEvaluations(evalsData);
-        setActivity(activityData);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, [user, token, navigate]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const headers = { 'Authorization': `Bearer ${token}` };
+      
+      const [usersRes, tokensRes, evalsRes, activityRes, whatsNewRes] = await Promise.all([
+        fetch('/api/admin/users', { headers }),
+        fetch('/api/admin/tokens', { headers }),
+        fetch('/api/admin/evaluations', { headers }),
+        fetch('/api/admin/activity', { headers }),
+        fetch('/api/user/whatsnew') // public route
+      ]);
+
+      if (!usersRes.ok) {
+        const txt = await usersRes.text().catch(() => '');
+        throw new Error(`Failed to fetch users: ${usersRes.status} ${txt}`);
+      }
+
+      const usersData = await usersRes.json();
+      const tokensData = tokensRes.ok ? await tokensRes.json() : [];
+      const evalsData = evalsRes.ok ? await evalsRes.json() : [];
+      const activityData = activityRes.ok ? await activityRes.json() : [];
+      const whatsNewData = whatsNewRes.ok ? await whatsNewRes.json() : null;
+
+      if (whatsNewData) {
+        setWhatsNew(whatsNewData);
+      }
+
+      setUsers(usersData);
+      setTokens(tokensData);
+      setEvaluations(evalsData);
+      setActivity(activityData);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper: show action message for a user row, auto-clear after 3s
+  const showActionMessage = (userId, text, type = 'success') => {
+    setActionMessages(prev => ({ ...prev, [userId]: { text, type } }));
+    setTimeout(() => {
+      setActionMessages(prev => { const n = { ...prev }; delete n[userId]; return n; });
+    }, 3000);
+  };
+
+  // Helper: parse difficulty from user's app_data
+  const getUserDifficulty = (u) => {
+    try {
+      const appData = typeof u.app_data === 'string' ? JSON.parse(u.app_data || '{}') : (u.app_data || {});
+      return appData.global_difficulty || appData.daily_test_difficulty || 'easy';
+    } catch {
+      return 'easy';
+    }
+  };
+
+  // --- Admin Actions ---
+
+  const handleResetDailyLimit = async (userId) => {
+    setActionLoading(prev => ({ ...prev, [userId]: 'reset' }));
+    try {
+      const res = await fetch(`/api/admin/reset-daily-limit/${userId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error((await res.json()).message || 'Failed');
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, completed_today: false } : u));
+      showActionMessage(userId, '✅ Daily test limit reset');
+    } catch (err) {
+      showActionMessage(userId, `❌ ${err.message}`, 'error');
+    } finally {
+      setActionLoading(prev => { const n = { ...prev }; delete n[userId]; return n; });
+    }
+  };
+
+  const handleChangePassword = async (userId) => {
+    const newPassword = passwordInputs[userId];
+    if (!newPassword || newPassword.length < 4) {
+      showActionMessage(userId, '❌ Password must be at least 4 characters', 'error');
+      return;
+    }
+    setActionLoading(prev => ({ ...prev, [userId]: 'password' }));
+    try {
+      const res = await fetch('/api/admin/change-password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ userId, newPassword })
+      });
+      if (!res.ok) throw new Error((await res.json()).message || 'Failed');
+      showActionMessage(userId, '✅ Password updated');
+      setShowPasswordInput(prev => ({ ...prev, [userId]: false }));
+      setPasswordInputs(prev => ({ ...prev, [userId]: '' }));
+    } catch (err) {
+      showActionMessage(userId, `❌ ${err.message}`, 'error');
+    } finally {
+      setActionLoading(prev => { const n = { ...prev }; delete n[userId]; return n; });
+    }
+  };
+
+  const handleSetDifficulty = async (userId, difficulty) => {
+    setActionLoading(prev => ({ ...prev, [userId]: 'difficulty' }));
+    try {
+      const res = await fetch(`/api/admin/set-difficulty/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ difficulty })
+      });
+      if (!res.ok) throw new Error((await res.json()).message || 'Failed');
+      // Update local state
+      setUsers(prev => prev.map(u => {
+        if (u.id !== userId) return u;
+        let appData = {};
+        try { appData = typeof u.app_data === 'string' ? JSON.parse(u.app_data || '{}') : (u.app_data || {}); } catch { appData = {}; }
+        appData.global_difficulty = difficulty;
+        appData.daily_test_difficulty = difficulty;
+        return { ...u, app_data: JSON.stringify(appData) };
+      }));
+      showActionMessage(userId, `✅ Difficulty set to ${difficulty}`);
+    } catch (err) {
+      showActionMessage(userId, `❌ ${err.message}`, 'error');
+    } finally {
+      setActionLoading(prev => { const n = { ...prev }; delete n[userId]; return n; });
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    setActionLoading(prev => ({ ...prev, [userId]: 'delete' }));
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error((await res.json()).message || 'Failed');
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      setDeleteConfirm(prev => { const n = { ...prev }; delete n[userId]; return n; });
+    } catch (err) {
+      showActionMessage(userId, `❌ ${err.message}`, 'error');
+      setDeleteConfirm(prev => { const n = { ...prev }; delete n[userId]; return n; });
+    } finally {
+      setActionLoading(prev => { const n = { ...prev }; delete n[userId]; return n; });
+    }
+  };
+
+  // --- What's New handlers ---
 
   const handleUpdateWhatsNew = async (e) => {
     e.preventDefault();
@@ -124,6 +238,13 @@ export default function AdminDashboard() {
   const totalEssays = evaluations.filter(e => e.test_type === 'essay').length;
   const totalMCQs = evaluations.filter(e => e.test_type === 'mcq').length;
   const totalTokensUsed = tokens.reduce((sum, t) => sum + (t.tokens_used || 0), 0);
+
+  // Difficulty badge styles
+  const difficultyStyles = {
+    easy: { bg: 'rgba(52, 211, 153, 0.15)', color: 'var(--accent-emerald)' },
+    medium: { bg: 'rgba(251, 191, 36, 0.15)', color: 'var(--accent-amber)' },
+    hard: { bg: 'rgba(244, 63, 94, 0.15)', color: 'var(--accent-rose)' },
+  };
 
   return (
     <div className="admin-container animate-fade-in" style={{ padding: '20px' }}>
@@ -203,32 +324,189 @@ export default function AdminDashboard() {
                   <th style={{ padding: '15px' }}>Name</th>
                   <th style={{ padding: '15px' }}>Email</th>
                   <th style={{ padding: '15px' }}>Role</th>
+                  <th style={{ padding: '15px' }}>Daily Quiz</th>
+                  <th style={{ padding: '15px' }}>Difficulty</th>
+                  <th style={{ padding: '15px' }}>Streak</th>
                   <th style={{ padding: '15px' }}>Joined At</th>
+                  <th style={{ padding: '15px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {users.map(u => (
-                  <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <td style={{ padding: '15px' }}>{u.id}</td>
-                    <td style={{ padding: '15px', fontWeight: 500 }}>{u.name}</td>
-                    <td style={{ padding: '15px', color: 'var(--text-secondary)' }}>{u.email}</td>
-                    <td style={{ padding: '15px' }}>
-                      <span style={{ 
-                        padding: '4px 8px', 
-                        borderRadius: '4px', 
-                        fontSize: '0.8rem',
-                        background: u.role === 'admin' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(56, 189, 248, 0.2)',
-                        color: u.role === 'admin' ? 'var(--accent-violet)' : 'var(--accent-blue)'
-                      }}>
-                        {u.role.toUpperCase()}
-                      </span>
-                    </td>
-                    <td style={{ padding: '15px' }}>{new Date(u.created_at).toLocaleString()}</td>
-                  </tr>
-                ))}
+                {users.map(u => {
+                  const isAdmin = u.role === 'admin';
+                  const currentDiff = getUserDifficulty(u);
+                  const diffStyle = difficultyStyles[currentDiff] || difficultyStyles.easy;
+                  const msg = actionMessages[u.id];
+                  const loadingAction = actionLoading[u.id];
+
+                  return (
+                    <React.Fragment key={u.id}>
+                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <td style={{ padding: '15px' }}>{u.id}</td>
+                        <td style={{ padding: '15px', fontWeight: 500 }}>{u.name}</td>
+                        <td style={{ padding: '15px', color: 'var(--text-secondary)' }}>{u.email}</td>
+                        <td style={{ padding: '15px' }}>
+                          <span style={{ 
+                            padding: '4px 8px', 
+                            borderRadius: '4px', 
+                            fontSize: '0.8rem',
+                            background: u.role === 'admin' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(56, 189, 248, 0.2)',
+                            color: u.role === 'admin' ? 'var(--accent-violet)' : 'var(--accent-blue)'
+                          }}>
+                            {u.role.toUpperCase()}
+                          </span>
+                        </td>
+                        {/* Daily Quiz Status */}
+                        <td style={{ padding: '15px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              fontSize: '0.78rem',
+                              fontWeight: 600,
+                              background: u.completed_today ? 'rgba(52, 211, 153, 0.15)' : 'rgba(244, 63, 94, 0.15)',
+                              color: u.completed_today ? 'var(--accent-emerald)' : 'var(--accent-rose)',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {u.completed_today ? '✅ Done' : '❌ Pending'}
+                            </span>
+                            {u.completed_today && (
+                              <button
+                                className="btn btn-outline btn-sm"
+                                style={{ fontSize: '0.7rem', padding: '2px 8px' }}
+                                disabled={loadingAction === 'reset'}
+                                onClick={() => handleResetDailyLimit(u.id)}
+                              >
+                                {loadingAction === 'reset' ? '⏳' : '🔄 Reset'}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                        {/* Difficulty */}
+                        <td style={{ padding: '15px' }}>
+                          <select
+                            value={currentDiff}
+                            onChange={(e) => handleSetDifficulty(u.id, e.target.value)}
+                            disabled={loadingAction === 'difficulty'}
+                            style={{
+                              background: diffStyle.bg,
+                              color: diffStyle.color,
+                              border: `1px solid ${diffStyle.color}33`,
+                              borderRadius: '6px',
+                              padding: '4px 8px',
+                              fontSize: '0.78rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              outline: 'none',
+                            }}
+                          >
+                            <option value="easy">🟢 Easy</option>
+                            <option value="medium">🟡 Medium</option>
+                            <option value="hard">🔴 Hard</option>
+                          </select>
+                        </td>
+                        {/* Streak */}
+                        <td style={{ padding: '15px' }}>
+                          <div style={{ fontSize: '0.85rem' }}>
+                            <span style={{ fontWeight: 600 }}>🔥 {u.current_streak || 0}</span>
+                            <span style={{ color: 'var(--text-muted)', marginLeft: '6px', fontSize: '0.75rem' }}>
+                              (Best: {u.highest_streak || 0})
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ padding: '15px' }}>{new Date(u.created_at).toLocaleString()}</td>
+                        {/* Actions */}
+                        <td style={{ padding: '15px' }}>
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                            <button
+                              className="btn btn-outline btn-sm"
+                              style={{ fontSize: '0.72rem', padding: '3px 8px' }}
+                              onClick={() => setShowPasswordInput(prev => ({ ...prev, [u.id]: !prev[u.id] }))}
+                            >
+                              🔑 Password
+                            </button>
+                            {!isAdmin && (
+                              deleteConfirm[u.id] ? (
+                                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                  <button
+                                    className="btn btn-sm"
+                                    style={{ fontSize: '0.72rem', padding: '3px 8px', background: 'rgba(244, 63, 94, 0.2)', color: 'var(--accent-rose)', border: '1px solid var(--accent-rose)' }}
+                                    disabled={loadingAction === 'delete'}
+                                    onClick={() => handleDeleteUser(u.id)}
+                                  >
+                                    {loadingAction === 'delete' ? '⏳ Deleting...' : '⚠️ Confirm'}
+                                  </button>
+                                  <button
+                                    className="btn btn-outline btn-sm"
+                                    style={{ fontSize: '0.72rem', padding: '3px 8px' }}
+                                    onClick={() => setDeleteConfirm(prev => ({ ...prev, [u.id]: false }))}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  className="btn btn-sm"
+                                  style={{ fontSize: '0.72rem', padding: '3px 8px', background: 'rgba(244, 63, 94, 0.15)', color: 'var(--accent-rose)', border: '1px solid rgba(244, 63, 94, 0.3)' }}
+                                  onClick={() => setDeleteConfirm(prev => ({ ...prev, [u.id]: true }))}
+                                >
+                                  🗑️ Remove
+                                </button>
+                              )
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                      {/* Password Input Row */}
+                      {showPasswordInput[u.id] && (
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td colSpan="9" style={{ padding: '10px 15px' }}>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', maxWidth: '450px' }}>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>New password for <strong>{u.name}</strong>:</span>
+                              <input
+                                type="password"
+                                className="input-field"
+                                placeholder="Enter new password"
+                                style={{ flex: 1, padding: '6px 10px', fontSize: '0.85rem' }}
+                                value={passwordInputs[u.id] || ''}
+                                onChange={(e) => setPasswordInputs(prev => ({ ...prev, [u.id]: e.target.value }))}
+                                onKeyDown={(e) => e.key === 'Enter' && handleChangePassword(u.id)}
+                              />
+                              <button
+                                className="btn btn-primary btn-sm"
+                                style={{ fontSize: '0.75rem', padding: '5px 12px' }}
+                                disabled={loadingAction === 'password'}
+                                onClick={() => handleChangePassword(u.id)}
+                              >
+                                {loadingAction === 'password' ? '⏳' : 'Save'}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      {/* Action Message Row */}
+                      {msg && (
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td colSpan="9" style={{ padding: '6px 15px' }}>
+                            <div style={{
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              fontSize: '0.82rem',
+                              background: msg.type === 'error' ? 'rgba(244, 63, 94, 0.15)' : 'rgba(52, 211, 153, 0.15)',
+                              color: msg.type === 'error' ? 'var(--accent-rose)' : 'var(--accent-emerald)',
+                              display: 'inline-block'
+                            }}>
+                              {msg.text}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
                 {users.length === 0 && (
                   <tr>
-                    <td colSpan="5" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No users found</td>
+                    <td colSpan="9" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No users found</td>
                   </tr>
                 )}
               </tbody>
@@ -388,6 +666,9 @@ export default function AdminDashboard() {
                   'UPDATE_STREAK': { bg: 'rgba(52, 211, 153, 0.1)', color: 'var(--accent-emerald)' },
                   'UPDATE_PREFERENCES': { bg: 'rgba(148, 163, 184, 0.15)', color: 'var(--text-secondary)' },
                   'ADMIN_CHANGE_PASSWORD': { bg: 'rgba(244, 63, 94, 0.2)', color: 'var(--accent-rose)' },
+                  'ADMIN_DELETE_USER': { bg: 'rgba(244, 63, 94, 0.25)', color: 'var(--accent-rose)' },
+                  'ADMIN_RESET_DAILY': { bg: 'rgba(56, 189, 248, 0.15)', color: 'var(--accent-blue)' },
+                  'ADMIN_SET_DIFFICULTY': { bg: 'rgba(251, 191, 36, 0.15)', color: 'var(--accent-amber)' },
                 };
                 const style = actionColors[a.action] || { bg: 'rgba(148, 163, 184, 0.1)', color: 'var(--text-secondary)' };
                 return (
